@@ -41,7 +41,6 @@ export class WorldScene extends Phaser.Scene {
   private facing = 1;
   private coyote = 0;
   private jumpBuf = 0;
-  private jumpCut = false;
   private attackCd = 0;
   private skillCd = 0;
   private invuln = 0;
@@ -146,8 +145,9 @@ export class WorldScene extends Phaser.Scene {
     pbody.setSize(42, 78);
     pbody.setOffset(75, 108);
     this.player.setCollideWorldBounds(true);
-    this.player.setMaxVelocity(job.speed, 980);
+    this.player.setMaxVelocity(job.speed, 1100);
     this.player.setDragX(0);
+    this.player.setGravityY(1680);
     this.player.setDepth(8);
     this.playSafe(`${this.jobId}-idle`);
     this.player.setScale(0.5);
@@ -218,6 +218,14 @@ export class WorldScene extends Phaser.Scene {
           return { cd: this.skillCd, hits: this.lastHits.slice(-8) };
         },
         hits: () => this.lastHits.slice(-12),
+        place: (x: number) => {
+          this.player.setPosition(x, 360);
+          const b = this.player.body as Phaser.Physics.Arcade.Body;
+          b.reset(x, 360);
+          this.invuln = 1.2;
+          this.dead = false;
+          return Math.round(this.player.x);
+        },
         shots: () =>
           (this.bullets.getChildren() as Phaser.Physics.Arcade.Sprite[])
             .filter((b) => b.active)
@@ -383,22 +391,18 @@ export class WorldScene extends Phaser.Scene {
       this.skipOneWay = 0.28;
       this.jumpBuf = 0;
     } else if ((grounded || this.coyote > 0) && this.jumpBuf > 0) {
-      body.setVelocityY(-560);
+      // Maple-style: full jump on press. Taps must clear ledges; no short-hop cut.
+      body.setVelocityY(-640);
+      if (Math.abs(a.moveX) > 0.15) body.setVelocityX(a.moveX * job.speed);
       this.coyote = 0;
       this.jumpBuf = 0;
-      this.jumpCut = false;
       sfxPlay.jump();
     }
 
-    if (!a.jumpHeld && !this.jumpCut && body.velocity.y < 0) {
-      body.setVelocityY(body.velocity.y * 0.48);
-      this.jumpCut = true;
-    }
+    if (!grounded && Math.abs(body.velocity.y) < 48) body.setGravityY(780);
+    else body.setGravityY(body.velocity.y < 0 ? 980 : 1680);
 
-    if (!grounded && Math.abs(body.velocity.y) < 42) body.setGravityY(720);
-    else body.setGravityY(body.velocity.y < 0 ? 1080 : 2280);
-
-    const accel = grounded ? 3400 : 1700;
+    const accel = grounded ? 3400 : 2400;
     if (Math.abs(a.moveX) > 0.15) {
       body.setAccelerationX(a.moveX * accel);
       this.facing = a.moveX > 0 ? 1 : -1;
@@ -406,9 +410,9 @@ export class WorldScene extends Phaser.Scene {
       body.setDragX(0);
     } else {
       body.setAccelerationX(0);
-      body.setDragX(grounded ? 2600 : 280);
+      body.setDragX(grounded ? 2600 : 80);
     }
-    body.setMaxVelocity(job.speed, 980);
+    body.setMaxVelocity(grounded ? job.speed : job.speed + 40, 1100);
 
     if (this.attackLock <= 0) {
       if (grounded && Math.abs(body.velocity.x) > 30) this.playSafe(`${this.jobId}-run`);
@@ -978,6 +982,7 @@ declare global {
       swing: () => unknown;
       skill: () => unknown;
       hits: () => unknown;
+      place: (x: number) => number;
       shots: () => unknown;
       mobs: () => unknown;
     };

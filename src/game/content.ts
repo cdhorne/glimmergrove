@@ -165,14 +165,14 @@ export const MAPS: Record<MapId, MapDef> = {
     spawn: { x: 280, y: 360 },
     platforms: [
       { x: 0, y: GROUND_Y, w: 920, h: GROUND_H, kind: "grass" },
-      { x: 1180, y: GROUND_Y, w: 2220, h: GROUND_H, kind: "grass" },
-      { x: 860, y: 360, w: 200, h: 26, kind: "wood", oneWay: true },
-      { x: 1040, y: 270, w: 180, h: 26, kind: "wood", oneWay: true },
+      { x: 1088, y: GROUND_Y, w: 2312, h: GROUND_H, kind: "grass" },
+      { x: 820, y: 378, w: 230, h: 26, kind: "wood", oneWay: true },
+      { x: 1000, y: 286, w: 200, h: 26, kind: "wood", oneWay: true },
       { x: 1600, y: 340, w: 240, h: 26, kind: "wood", oneWay: true },
       { x: 2100, y: 300, w: 200, h: 26, kind: "wood", oneWay: true },
       { x: 2580, y: 360, w: 280, h: 26, kind: "wood", oneWay: true },
     ],
-    pits: [{ x: 920, w: 260 }],
+    pits: [{ x: 920, w: 168 }],
     portals: [
       { x: 80, y: GROUND_Y, to: "haven", label: "Grove" },
       { x: 3120, y: GROUND_Y, to: "heartwood", label: "Heartwood", requireKills: 8 },
