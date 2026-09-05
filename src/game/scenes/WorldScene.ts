@@ -23,9 +23,12 @@ type Mob = Phaser.Physics.Arcade.Sprite & {
   maxHp: number;
   dir: number;
   hurtT: number;
+  chipT: number;
   originX: number;
   originY: number;
+  uid: number;
 };
+
 
 export class WorldScene extends Phaser.Scene {
   private mapId: MapId = "haven";
@@ -56,6 +59,9 @@ export class WorldScene extends Phaser.Scene {
   private portalLock = 0;
   private portalDwell = 0;
   private changingMap = false;
+  private nextMobId = 1;
+  private lastHits: { k: string; dmg: number; x: number; n: string }[] = [];
+
 
   constructor() {
     super("world");
@@ -82,6 +88,7 @@ export class WorldScene extends Phaser.Scene {
     this.portalDwell = 0;
     this.changingMap = false;
     this.interact = null;
+    this.lastHits = [];
   }
 
   create() {
@@ -200,8 +207,25 @@ export class WorldScene extends Phaser.Scene {
         cd: () => this.attackCd,
         swing: () => {
           this.doAttack(false);
-          return { cd: this.attackCd, mobs: this.mobs.filter((m) => m.active).map((m) => ({ k: m.kind, x: Math.round(m.x), hp: Math.round(m.hp) })) };
+          return {
+            cd: this.attackCd,
+            hits: this.lastHits.slice(-8),
+            mobs: this.mobs.filter((m) => m.active).map((m) => ({ k: m.kind, x: Math.round(m.x), hp: Math.round(m.hp) })),
+          };
         },
+        skill: () => {
+          this.doAttack(true);
+          return { cd: this.skillCd, hits: this.lastHits.slice(-8) };
+        },
+        hits: () => this.lastHits.slice(-12),
+        shots: () =>
+          (this.bullets.getChildren() as Phaser.Physics.Arcade.Sprite[])
+            .filter((b) => b.active)
+            .map((b) => ({
+              x: Math.round(b.x),
+              y: Math.round(b.y),
+              vx: Math.round(Number(b.getData("vx") ?? 0)),
+            })),
         mobs: () => this.mobs.filter((m) => m.active).map((m) => ({ k: m.kind, x: Math.round(m.x), y: Math.round(m.y), hp: Math.round(m.hp) })),
       };
     }
@@ -270,24 +294,40 @@ export class WorldScene extends Phaser.Scene {
     sprite.maxHp = def.hp;
     sprite.dir = Math.random() < 0.5 ? -1 : 1;
     sprite.hurtT = 0;
+    sprite.chipT = 0;
     sprite.originX = x;
     sprite.originY = y;
+    sprite.uid = this.nextMobId++;
     sprite.setScale(kind === "warden" ? 0.62 : 0.42);
     sprite.setOrigin(0.5, 1);
-    sprite.setSize(def.bodyW, def.bodyH);
     const mb = sprite.body as Phaser.Physics.Arcade.Body;
-    mb.setOffset((sprite.width - def.bodyW) / 2, sprite.height - def.bodyH - 4);
+    this.fitBody(sprite, def.hitW, def.hitH, true);
+    mb.setAllowGravity(true);
     sprite.setCollideWorldBounds(true);
     sprite.setMaxVelocity(def.speed, 900);
     sprite.setGravityY(1800);
     sprite.setDepth(7);
     sprite.setData("mob", true);
+    sprite.setData("uid", sprite.uid);
+    const chip = this.add.graphics().setDepth(18);
+    sprite.setData("chip", chip);
     this.physics.add.collider(sprite, this.solids);
     this.physics.add.overlap(this.player, sprite, () => this.touchMob(sprite));
     this.physics.add.overlap(this.bullets, sprite, (b, m) => this.bulletHit(b as Phaser.Physics.Arcade.Sprite, m as Mob));
     if (this.anims.exists(`${kind}-idle`)) sprite.play(`${kind}-idle`);
     this.mobs.push(sprite);
     return sprite;
+  }
+
+  private fitBody(spr: Phaser.Physics.Arcade.Sprite, worldW: number, worldH: number, feet: boolean) {
+    const body = spr.body as Phaser.Physics.Arcade.Body;
+    const sx = Math.abs(spr.scaleX) || 1;
+    const sy = Math.abs(spr.scaleY) || 1;
+    const bw = worldW / sx;
+    const bh = worldH / sy;
+    body.setSize(bw, bh, false);
+    if (feet) body.setOffset((spr.width - bw) * 0.5, spr.height - bh);
+    else body.setOffset((spr.width - bw) * 0.5, (spr.height - bh) * 0.5);
   }
 
   update(_t: number, delta: number) {
@@ -323,6 +363,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.updatePlayer(dt, actions, _t);
     this.updateMobs(dt);
+    this.updateShots(dt);
     this.updateInteract(dt, actions);
     this.checkPits();
     this.emitHudThrottled(dt);
@@ -383,6 +424,7 @@ export class WorldScene extends Phaser.Scene {
 
   private doAttack(skill: boolean) {
     const job = JOBS[this.jobId];
+    const strike = skill ? job.skill : job.attack;
     this.attackCd = job.attackCd;
     if (skill) {
       this.save.mp -= job.skillCost;
@@ -392,8 +434,8 @@ export class WorldScene extends Phaser.Scene {
     this.playSafe(`${this.jobId}-attack`);
     sfxPlay.attack();
     const dmg = this.atk() * (skill ? 1.7 : 1);
-    if (job.range === "melee") this.melee(dmg, skill ? 92 : 58);
-    else this.shoot(job.range, dmg, skill ? 3 : 1);
+    if (strike.shape === "melee") this.melee(dmg, strike.reach, strike.pierce, strike.falloff);
+    else this.shoot(strike.shape, dmg, strike.shots, strike.pierce, strike.falloff);
   }
 
   private atk() {
@@ -416,35 +458,49 @@ export class WorldScene extends Phaser.Scene {
     return JOBS[this.jobId].mp + (this.save.level - 1) * 6;
   }
 
-  private melee(dmg: number, reach: number) {
+  private melee(dmg: number, reach: number, pierce: number, falloff: number) {
     const x = this.player.x + this.facing * reach * 0.55;
     const y = this.player.y - 32;
     this.flashFx(x, y);
-    for (const mob of this.mobs) {
-      if (!mob.active) continue;
-      const dx = (mob.x - this.player.x) * this.facing;
-      if (dx > -16 && dx < reach + 24 && Math.abs(mob.y - this.player.y) < 80) this.hurtMob(mob, dmg);
-    }
+    const hits = this.mobs
+      .filter((mob) => {
+        if (!mob.active) return false;
+        if (Math.abs(mob.y - this.player.y) > 96) return false;
+        const half = MONSTERS[mob.kind].hitW * 0.5;
+        const toward = (mob.x - this.player.x) * this.facing;
+        return toward + half > -48 && toward - half < reach + 16;
+      })
+      .sort((a, b) => (a.x - this.player.x) * this.facing - (b.x - this.player.x) * this.facing)
+      .slice(0, Math.max(1, pierce));
+    hits.forEach((mob, i) => {
+      const scaled = dmg * (1 - falloff * i);
+      this.hurtMob(mob, scaled, { sparkX: x, sparkY: y });
+    });
   }
 
-  private shoot(kind: "orb" | "arrow", dmg: number, count: number) {
+  private shoot(kind: "orb" | "arrow", dmg: number, count: number, pierce: number, falloff: number) {
     const key = kind === "orb" ? "orb" : "arrow";
     const spreads = count === 1 ? [0] : [-0.22, 0, 0.22];
+    const ox = this.player.x + this.facing * 26;
+    const oy = this.player.y - 28;
     for (const ang of spreads) {
-      const b = this.bullets.get(this.player.x + this.facing * 28, this.player.y - 40, this.tex(key)) as
-        | Phaser.Physics.Arcade.Sprite
-        | null;
+      const b = this.bullets.get(ox, oy, this.tex(key)) as Phaser.Physics.Arcade.Sprite | null;
       if (!b) continue;
       b.setActive(true).setVisible(true);
+      b.setPosition(ox, oy);
+      if (this.anims.exists(key)) b.play(key);
       b.setDisplaySize(kind === "orb" ? 28 : 36, kind === "orb" ? 28 : 18);
       b.setFlipX(this.facing < 0);
+      b.setDepth(11);
       b.setData("dmg", dmg);
+      b.setData("pierce", pierce);
+      b.setData("falloff", falloff);
+      b.setData("hitIds", [] as number[]);
+      b.setData("vx", Math.cos(ang) * 460 * this.facing);
+      b.setData("vy", Math.sin(ang) * 460 * 0.35);
       const body = b.body as Phaser.Physics.Arcade.Body;
-      body.enable = true;
-      body.setAllowGravity(false);
-      const spd = 420;
-      body.setVelocity(Math.cos(ang) * spd * this.facing, Math.sin(ang) * spd);
-      if (this.anims.exists(key)) b.play(key);
+      body.enable = false;
+      body.stop();
       this.time.delayedCall(1400, () => this.recycleBullet(b));
     }
   }
@@ -458,11 +514,43 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  private updateShots(dt: number) {
+    const shots = this.bullets.getChildren() as Phaser.Physics.Arcade.Sprite[];
+    for (const b of shots) {
+      if (!b.active) continue;
+      b.x += Number(b.getData("vx") ?? 0) * dt;
+      b.y += Number(b.getData("vy") ?? 0) * dt;
+      const hw = 18;
+      const hh = 14;
+      const bl = b.x - hw;
+      const br = b.x + hw;
+      const bt = b.y - hh;
+      const bbott = b.y + hh;
+      for (const mob of this.mobs) {
+        if (!mob.active) continue;
+        const def = MONSTERS[mob.kind];
+        const ml = mob.x - def.hitW * 0.5;
+        const mr = mob.x + def.hitW * 0.5;
+        const mt = mob.y - def.hitH;
+        const mbott = mob.y + 8;
+        if (bl < mr && br > ml && bt < mbott && bbott > mt) this.bulletHit(b, mob);
+      }
+    }
+  }
+
   private bulletHit(b: Phaser.Physics.Arcade.Sprite, mob: Mob) {
     if (!b.active || !mob.active) return;
-    const dmg = Number(b.getData("dmg") ?? 10);
-    this.recycleBullet(b);
-    this.hurtMob(mob, dmg);
+    const hitIds = (b.getData("hitIds") as number[] | undefined) ?? [];
+    if (hitIds.includes(mob.uid)) return;
+    hitIds.push(mob.uid);
+    b.setData("hitIds", hitIds);
+    const base = Number(b.getData("dmg") ?? 10);
+    const falloff = Number(b.getData("falloff") ?? 0);
+    const pierce = Math.max(1, Number(b.getData("pierce") ?? 1));
+    const dmg = base * (1 - falloff * (hitIds.length - 1));
+    const def = MONSTERS[mob.kind];
+    this.hurtMob(mob, dmg, { sparkX: b.x, sparkY: b.y });
+    if (def.blockPierce || hitIds.length >= pierce) this.recycleBullet(b);
   }
 
   private flashFx(x: number, y: number) {
@@ -472,17 +560,28 @@ export class WorldScene extends Phaser.Scene {
     this.time.delayedCall(280, () => fx.destroy());
   }
 
-  private hurtMob(mob: Mob, dmg: number) {
-    if (mob.hurtT > 0) return;
-    mob.hurtT = 0.12;
-    mob.hp -= dmg;
+  private hurtMob(mob: Mob, dmg: number, where?: { sparkX: number; sparkY: number }) {
+    if (!mob.active) return;
+    const def = MONSTERS[mob.kind];
+    const crit = Math.random() < 0.12;
+    const rolled = Math.max(1, Math.round(dmg * (0.85 + Math.random() * 0.3) * (crit ? 1.45 : 1)));
+    mob.hp -= rolled;
+    mob.chipT = 2.2;
+    mob.hurtT = 0.14;
     const body = mob.body as Phaser.Physics.Arcade.Body;
-    body.setVelocityX(-mob.dir * 80);
-    this.popNumber(mob.x, mob.y - 40, `${Math.round(dmg)}`, "#f4efe4");
-    this.trauma = Math.min(1, this.trauma + 0.22);
+    body.setVelocityX(-Math.sign(mob.x - this.player.x || this.facing) * 90 * def.knockback);
+    const nx = where?.sparkX ?? mob.x;
+    const ny = (where?.sparkY ?? mob.y - 36) - 8;
+    this.popNumber(mob.x + (Math.random() - 0.5) * 18, mob.y - 48, `${rolled}`, crit ? "crit" : "hit");
+    this.flashFx(nx, ny);
+    this.trauma = Math.min(1, this.trauma + (crit ? 0.34 : 0.2));
     sfxPlay.hit();
     mob.setTintFill(0xffffff);
-    this.time.delayedCall(60, () => mob.clearTint());
+    this.time.delayedCall(70, () => {
+      if (mob.active) mob.clearTint();
+    });
+    this.lastHits.push({ k: mob.kind, dmg: rolled, x: Math.round(mob.x), n: crit ? "crit" : "hit" });
+    if (this.lastHits.length > 24) this.lastHits.shift();
     if (mob.hp <= 0) this.killMob(mob);
   }
 
@@ -497,6 +596,8 @@ export class WorldScene extends Phaser.Scene {
     const drop = rollDrop(isBoss);
     if (drop) this.spawnItem(mob.x, mob.y - 10, drop);
     this.flashFx(mob.x, mob.y);
+    const chip = mob.getData("chip") as Phaser.GameObjects.Graphics | undefined;
+    chip?.destroy();
     mob.destroy();
     this.mobs = this.mobs.filter((m) => m !== mob);
     this.persist();
@@ -528,7 +629,7 @@ export class WorldScene extends Phaser.Scene {
     }
     if (leveled) {
       sfxPlay.level();
-      this.popNumber(this.player.x, this.player.y - 70, "Level up", "#6b8f71");
+      this.popNumber(this.player.x, this.player.y - 70, "Level up", "good");
     }
   }
 
@@ -594,7 +695,7 @@ export class WorldScene extends Phaser.Scene {
     body.setVelocity(-this.facing * 120, -180);
     this.trauma = Math.min(1, this.trauma + 0.4);
     sfxPlay.hurt();
-    this.popNumber(this.player.x, this.player.y - 36, `${dmg}`, "#c45c4a");
+    this.popNumber(this.player.x, this.player.y - 36, `${dmg}`, "hurt");
     if (this.save.hp <= 0) this.die();
   }
 
@@ -602,6 +703,8 @@ export class WorldScene extends Phaser.Scene {
     for (const mob of this.mobs) {
       if (!mob.active) continue;
       mob.hurtT = Math.max(0, mob.hurtT - dt);
+      mob.chipT = Math.max(0, mob.chipT - dt);
+      this.drawMobChip(mob);
       const def = MONSTERS[mob.kind];
       const body = mob.body as Phaser.Physics.Arcade.Body;
       if (mob.y > GAME_H + 20) {
@@ -741,17 +844,59 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  private popNumber(x: number, y: number, text: string, color: string) {
+  private drawMobChip(mob: Mob) {
+    const g = mob.getData("chip") as Phaser.GameObjects.Graphics | undefined;
+    if (!g) return;
+    g.clear();
+    if (mob.chipT <= 0 && mob.hp >= mob.maxHp) return;
+    const w = mob.kind === "warden" ? 72 : 40;
+    const h = 5;
+    const x = mob.x - w / 2;
+    const y = mob.y - (mob.kind === "warden" ? 128 : 62);
+    const pct = Math.max(0, Math.min(1, mob.hp / mob.maxHp));
+    g.fillStyle(0x121814, 0.78);
+    g.fillRoundedRect(x, y, w, h, 2);
+    g.fillStyle(pct > 0.35 ? 0xc45c4a : 0xa33b2c, 1);
+    g.fillRoundedRect(x, y, Math.max(2, w * pct), h, 2);
+  }
+
+  private popNumber(x: number, y: number, text: string, tone: string) {
+    const pal: Record<string, { fill: string; stroke: string; size: string }> = {
+      hit: { fill: "#fff6d8", stroke: "#121814", size: "26px" },
+      crit: { fill: "#f0c14b", stroke: "#3a2208", size: "32px" },
+      hurt: { fill: "#f2b4a8", stroke: "#3a1410", size: "22px" },
+      good: { fill: "#c5e0c0", stroke: "#121814", size: "20px" },
+    };
+    const s = pal[tone] ?? { fill: "#fff6d8", stroke: "#121814", size: "24px" };
     const t = this.add
-      .text(x, y, text, { fontFamily: "Figtree, sans-serif", fontSize: "14px", color, fontStyle: "700" })
+      .text(x, y, text, {
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: s.size,
+        color: s.fill,
+        fontStyle: "bold",
+        stroke: s.stroke,
+        strokeThickness: 6,
+      })
       .setOrigin(0.5)
-      .setDepth(20);
+      .setDepth(40)
+      .setScale(0.7);
     this.tweens.add({
       targets: t,
-      y: y - 28,
-      alpha: 0,
-      duration: 520,
+      y: y - 46,
+      duration: 740,
       ease: "Cubic.easeOut",
+    });
+    this.tweens.add({
+      targets: t,
+      scale: 1.12,
+      duration: 140,
+      ease: "Back.easeOut",
+    });
+    this.tweens.add({
+      targets: t,
+      alpha: 0,
+      duration: 260,
+      delay: 460,
       onComplete: () => t.destroy(),
     });
   }
@@ -831,6 +976,9 @@ declare global {
       job: () => string;
       cd: () => number;
       swing: () => unknown;
+      skill: () => unknown;
+      hits: () => unknown;
+      shots: () => unknown;
       mobs: () => unknown;
     };
   }

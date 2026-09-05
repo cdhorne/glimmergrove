@@ -5,6 +5,16 @@ export type JobId = "guardian" | "weaver" | "ranger";
 export type MapId = "haven" | "dewpath" | "heartwood";
 export type ItemSlot = "weapon" | "armor" | "acc";
 
+export type Strike = {
+  shape: "melee" | "orb" | "arrow";
+  reach: number;
+  /** How many bodies this strike may touch before it is absorbed. 1 = stop on first. */
+  pierce: number;
+  /** Damage multiplier lost per extra target (0.2 → 80% on the second). */
+  falloff: number;
+  shots: number;
+};
+
 export type JobDef = {
   id: JobId;
   name: string;
@@ -19,9 +29,10 @@ export type JobDef = {
   attackCd: number;
   skillCd: number;
   skillCost: number;
-  range: "melee" | "orb" | "arrow";
   skillName: string;
   attackName: string;
+  attack: Strike;
+  skill: Strike;
 };
 
 export const JOBS: Record<JobId, JobDef> = {
@@ -39,9 +50,10 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.32,
     skillCd: 5.2,
     skillCost: 14,
-    range: "melee",
     skillName: "Oakspin",
     attackName: "Sprout Slash",
+    attack: { shape: "melee", reach: 70, pierce: 3, falloff: 0, shots: 1 },
+    skill: { shape: "melee", reach: 108, pierce: 6, falloff: 0, shots: 1 },
   },
   weaver: {
     id: "weaver",
@@ -57,9 +69,10 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.42,
     skillCd: 4.6,
     skillCost: 18,
-    range: "orb",
     skillName: "Cascade",
     attackName: "Dewbolt",
+    attack: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 1 },
+    skill: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 3 },
   },
   ranger: {
     id: "ranger",
@@ -75,11 +88,13 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.36,
     skillCd: 4.8,
     skillCost: 16,
-    range: "arrow",
     skillName: "Fan Volley",
     attackName: "Needleshot",
+    attack: { shape: "arrow", reach: 0, pierce: 1, falloff: 0, shots: 1 },
+    skill: { shape: "arrow", reach: 0, pierce: 2, falloff: 0.2, shots: 3 },
   },
 };
+
 
 export type PlatformDef = {
   x: number;
@@ -225,9 +240,62 @@ export type MonsterKind = "dewslug" | "capling" | "warden";
 
 export const MONSTERS: Record<
   MonsterKind,
-  { hp: number; atk: number; exp: number; glims: number; speed: number; display: number; bodyW: number; bodyH: number }
+  {
+    hp: number;
+    atk: number;
+    exp: number;
+    glims: number;
+    speed: number;
+    display: number;
+    bodyW: number;
+    bodyH: number;
+    hitW: number;
+    hitH: number;
+    knockback: number;
+    blockPierce: boolean;
+  }
 > = {
-  dewslug: { hp: 28, atk: 8, exp: 14, glims: 6, speed: 42, display: 70, bodyW: 36, bodyH: 28 },
-  capling: { hp: 38, atk: 11, exp: 18, glims: 8, speed: 58, display: 78, bodyW: 30, bodyH: 40 },
-  warden: { hp: 240, atk: 16, exp: 180, glims: 80, speed: 40, display: 168, bodyW: 90, bodyH: 110 },
+  dewslug: {
+    hp: 28,
+    atk: 8,
+    exp: 14,
+    glims: 6,
+    speed: 42,
+    display: 70,
+    bodyW: 36,
+    bodyH: 28,
+    hitW: 54,
+    hitH: 42,
+    knockback: 1,
+    blockPierce: false,
+  },
+  capling: {
+    hp: 38,
+    atk: 11,
+    exp: 18,
+    glims: 8,
+    speed: 58,
+    display: 78,
+    bodyW: 30,
+    bodyH: 40,
+    hitW: 46,
+    hitH: 58,
+    knockback: 1,
+    blockPierce: false,
+  },
+  warden: {
+    hp: 240,
+    atk: 16,
+    exp: 180,
+    glims: 80,
+    speed: 40,
+    display: 168,
+    bodyW: 90,
+    bodyH: 110,
+    hitW: 118,
+    hitH: 132,
+    knockback: 0,
+    blockPierce: true,
+  },
 };
+
