@@ -4,6 +4,7 @@ import { useGameUI } from "@/game/store";
 import { defaultSave, writeSave } from "@/game/save";
 import { unlockAudio } from "@/game/audio";
 import { cn } from "@/lib/utils";
+import { asset } from "@/lib/asset";
 
 const ORDER: JobId[] = ["guardian", "weaver", "ranger"];
 
@@ -56,7 +57,7 @@ export function JobSelect() {
                 )}
               >
                 <img
-                  src={`/game/sprites/${id}-portrait.png`}
+                  src={asset(`/game/sprites/${id}-portrait.png`)}
                   alt=""
                   className="size-20 shrink-0 rounded-[length:var(--radius-md)] bg-bg object-contain"
                 />

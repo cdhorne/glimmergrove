@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useGameUI } from "@/game/store";
 import { unlockAudio } from "@/game/audio";
+import { asset } from "@/lib/asset";
 
 export function TitleScreen() {
   const setScreen = useGameUI((s) => s.setScreen);
@@ -15,7 +16,7 @@ export function TitleScreen() {
   return (
     <div className="relative flex min-h-dvh flex-col justify-end overflow-hidden bg-bg">
       <img
-        src="/game/map/haven-sky.jpg"
+        src={asset("/game/map/haven-sky.jpg")}
         alt=""
         className="absolute inset-0 size-full object-cover opacity-80"
       />

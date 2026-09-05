@@ -37,7 +37,9 @@ src/
 public/game/           Sprites, skies, platforms
 ```
 
-## Controls
+## Play it
+
+[cdhorne.github.io/glimmergrove](https://cdhorne.github.io/glimmergrove/) — GitHub Pages, no install.
 
 Desktop: `A/D` move · `W` / Space jump · `J` attack · `K` skill · `E` talk · `I` bag
 
