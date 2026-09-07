@@ -18,6 +18,7 @@ export type SaveData = {
   kills: number;
   inventory: ItemDef[];
   equipped: { weapon?: ItemDef; armor?: ItemDef; acc?: ItemDef };
+  vials: { sap: number };
   heartwoodOpen: boolean;
   wardenDown: boolean;
 };
@@ -38,6 +39,7 @@ export function defaultSave(job: JobId, name: string): SaveData {
     kills: 0,
     inventory: [],
     equipped: {},
+    vials: { sap: 2 },
     heartwoodOpen: false,
     wardenDown: false,
   };
@@ -45,7 +47,7 @@ export function defaultSave(job: JobId, name: string): SaveData {
 
 function migrate(raw: SaveData): SaveData {
   const base = defaultSave(raw.job ?? "guardian", raw.name ?? "Rowan");
-  return { ...base, ...raw, version: SAVE_VERSION };
+  return { ...base, ...raw, vials: { sap: raw.vials?.sap ?? base.vials.sap }, version: SAVE_VERSION };
 }
 
 export function loadSave(): SaveData | null {

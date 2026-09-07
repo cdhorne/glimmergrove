@@ -27,7 +27,7 @@ src/
   components/          React chrome (title, jobs, HUD, touch)
   game/
     content.ts         Jobs, maps, monsters, drops
-    input.ts           Keyboard + touch → one action frame
+    input.ts           Keyboard + touch + gamepad → one action frame
     save.ts            Load / write local save
     createGame.ts      Phaser.Game config (960×540, FIT scale)
     scenes/
@@ -41,9 +41,11 @@ public/game/           Sprites, skies, platforms
 
 [cdhorne.github.io/glimmergrove](https://cdhorne.github.io/glimmergrove/) — GitHub Pages, no install.
 
-Desktop: `A/D` move · `W` / Space jump · `J` attack · `K` skill · `E` talk · `I` bag
+Desktop: `A/D` move · `W` / Space jump · `J` attack · `K` or `1` skill · `2–4` extra skills (locked) · `Q` vial · `E` talk · `I` bag
 
-Phone: on-screen buttons after you enter the grove. Landscape is nicer.
+Gamepad: left stick / d-pad move · A jump · X attack · Y skill · B vial · Back bag · Start pause.
+
+Phone: floating stick on the left, jump + attack on the right, 2×2 skill cluster, flask for vials. Talk appears as a prompt chip. Landscape is nicer.
 
 Walk into glowing rings to change maps. Dewpath → Heartwood unlocks after enough
 kills.
