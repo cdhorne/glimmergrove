@@ -36,6 +36,16 @@
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
+    overscroll-behavior: none;
+  }
+
+  html.gg-play-lock,
+  html.gg-play-lock body {
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   button:not(:disabled),
