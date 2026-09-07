@@ -1,3 +1,5 @@
+import { visualBox } from "./feel";
+
 type Phaserish = { scale?: { refresh?: () => void } };
 
 /**
@@ -9,18 +11,15 @@ export function bindVisualViewport(el: HTMLElement, game: { current: Phaserish |
   const vv = window.visualViewport;
 
   function apply() {
-    const w = Math.max(1, Math.round(vv?.width ?? window.innerWidth));
-    const h = Math.max(1, Math.round(vv?.height ?? window.innerHeight));
-    const x = Math.round(vv?.offsetLeft ?? 0);
-    const y = Math.round(vv?.offsetTop ?? 0);
+    const box = visualBox(vv, { innerWidth: window.innerWidth, innerHeight: window.innerHeight });
     el.style.position = "fixed";
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    el.style.width = `${w}px`;
-    el.style.height = `${h}px`;
+    el.style.left = `${box.x}px`;
+    el.style.top = `${box.y}px`;
+    el.style.width = `${box.w}px`;
+    el.style.height = `${box.h}px`;
     el.style.right = "auto";
     el.style.bottom = "auto";
-    el.dataset.orientation = w >= h ? "landscape" : "portrait";
+    el.dataset.orientation = box.orientation;
     game.current?.scale?.refresh?.();
   }
 
