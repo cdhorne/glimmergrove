@@ -1,0 +1,49 @@
+type Phaserish = { scale?: { refresh?: () => void } };
+
+/**
+ * Pin a shell to the *visible* viewport.
+ * Safari shrinks visualViewport when the tab bar opens and offsets it
+ * when the bar is at the top. layout viewport (100dvh) does not move.
+ */
+export function bindVisualViewport(el: HTMLElement, game: { current: Phaserish | null }) {
+  const vv = window.visualViewport;
+
+  function apply() {
+    const w = Math.max(1, Math.round(vv?.width ?? window.innerWidth));
+    const h = Math.max(1, Math.round(vv?.height ?? window.innerHeight));
+    const x = Math.round(vv?.offsetLeft ?? 0);
+    const y = Math.round(vv?.offsetTop ?? 0);
+    el.style.position = "fixed";
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.width = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.right = "auto";
+    el.style.bottom = "auto";
+    el.dataset.orientation = w >= h ? "landscape" : "portrait";
+    game.current?.scale?.refresh?.();
+  }
+
+  apply();
+  const onOrient = () => {
+    window.setTimeout(apply, 80);
+    window.setTimeout(apply, 320);
+  };
+  vv?.addEventListener("resize", apply);
+  vv?.addEventListener("scroll", apply);
+  window.addEventListener("resize", apply);
+  window.addEventListener("orientationchange", onOrient);
+
+  return () => {
+    vv?.removeEventListener("resize", apply);
+    vv?.removeEventListener("scroll", apply);
+    window.removeEventListener("resize", apply);
+    window.removeEventListener("orientationchange", onOrient);
+  };
+}
+
+/** Best-effort. Safari tabs ignore this; some Android browsers and standalone PWAs honor it. */
+export function requestLandscape() {
+  const orient = screen.orientation as ScreenOrientation & { lock?: (m: string) => Promise<void> };
+  void orient?.lock?.("landscape").catch(() => undefined);
+}

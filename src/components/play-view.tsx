@@ -6,6 +6,7 @@ import { gameBus, type HudSnap } from "@/game/bus";
 import { useGameUI } from "@/game/store";
 import { bindWindow } from "@/game/input";
 import { bindPlayGestures } from "@/game/gestures";
+import { bindVisualViewport, requestLandscape } from "@/game/viewport";
 import { loadSave, writeSave } from "@/game/save";
 import { JOBS } from "@/game/content";
 import { unlockAudio, setMuted, isMuted } from "@/game/audio";
@@ -13,7 +14,7 @@ import { unlockAudio, setMuted, isMuted } from "@/game/audio";
 export function PlayView() {
   const hostRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
-  const gameRef = useRef<{ destroy: (remove: boolean) => void } | null>(null);
+  const gameRef = useRef<{ destroy: (remove: boolean) => void; scale?: { refresh?: () => void } } | null>(null);
   const hud = useGameUI((s) => s.hud);
   const setHud = useGameUI((s) => s.setHud);
   const paused = useGameUI((s) => s.paused);
@@ -27,8 +28,10 @@ export function PlayView() {
 
   useEffect(() => {
     unlockAudio();
+    requestLandscape();
     const unbind = bindWindow();
     const ungest = shellRef.current ? bindPlayGestures(shellRef.current) : () => {};
+    const unview = shellRef.current ? bindVisualViewport(shellRef.current, gameRef) : () => {};
     const offHud = gameBus.on("hud", (snap) => setHud(snap as HudSnap));
     const offPause = gameBus.on("toggle-pause", () => setPaused(!useGameUI.getState().paused));
     const offBag = gameBus.on("toggle-bag", () => setBag(!useGameUI.getState().bagOpen));
@@ -43,6 +46,7 @@ export function PlayView() {
       const job = loaded?.job ?? useGameUI.getState().job;
       const mapId = loaded?.map ?? "haven";
       gameRef.current = createGame({ parent, job, mapId });
+      gameRef.current.scale?.refresh?.();
     })();
     const onHide = () => {
       if (document.hidden) gameBus.emit("set-paused", true);
@@ -52,6 +56,7 @@ export function PlayView() {
       destroyed = true;
       unbind();
       ungest();
+      unview();
       offHud();
       offPause();
       offBag();
@@ -75,8 +80,13 @@ export function PlayView() {
   return (
     <div
       ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden bg-bg touch-none overscroll-none select-none"
-      style={{ touchAction: "none", overscrollBehavior: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+      className="relative flex flex-col overflow-hidden bg-bg touch-none overscroll-none select-none"
+      style={{
+        touchAction: "none",
+        overscrollBehavior: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+      }}
     >
       <div
         ref={hostRef}

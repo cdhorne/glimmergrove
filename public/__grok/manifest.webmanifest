@@ -3,6 +3,8 @@
   "short_name": "Glimmergrove",
   "start_url": ".",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "landscape",
   "background_color": "#121814",
   "theme_color": "#121814",
   "icons": [
