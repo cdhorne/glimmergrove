@@ -11,6 +11,7 @@ type GameUI = {
   name: string;
   paused: boolean;
   bagOpen: boolean;
+  yardOpen: boolean;
   hud: HudSnap | null;
   save: SaveData | null;
   setScreen: (s: Screen) => void;
@@ -18,6 +19,7 @@ type GameUI = {
   setName: (n: string) => void;
   setPaused: (v: boolean) => void;
   setBagOpen: (v: boolean) => void;
+  setYardOpen: (v: boolean) => void;
   setHud: (h: HudSnap) => void;
   refreshSave: () => void;
 };
@@ -28,6 +30,7 @@ export const useGameUI = create<GameUI>((set) => ({
   name: "Rowan",
   paused: false,
   bagOpen: false,
+  yardOpen: false,
   hud: null,
   save: null,
   setScreen: (screen) => set({ screen }),
@@ -35,6 +38,7 @@ export const useGameUI = create<GameUI>((set) => ({
   setName: (name) => set({ name }),
   setPaused: (paused) => set({ paused }),
   setBagOpen: (bagOpen) => set({ bagOpen }),
+  setYardOpen: (yardOpen) => set({ yardOpen }),
   setHud: (hud) => set({ hud }),
   refreshSave: () => set({ save: loadSave() }),
 }));
