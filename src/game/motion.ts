@@ -2,15 +2,27 @@ import * as Phaser from "phaser";
 import type { ActionFrame } from "./input";
 import { JOBS, type JobId } from "./content";
 import { sfxPlay } from "./audio";
+import {
+  AIR_DRAG,
+  GRAVITY_DOWN,
+  JUMP_V,
+  JUMP_BUFFER,
+  COYOTE,
+  MAX_FALL,
+  MOVE_DEADZONE,
+  gravityForVy,
+  steerFor,
+} from "./feel";
 
-/** Maple-tight hop. Peak ~ v² / 2g ≈ 90px. No apex float. */
-export const JUMP_V = -620;
-export const GRAVITY_UP = 2100;
-export const GRAVITY_DOWN = 3400;
-export const MAX_FALL = 980;
-export const GROUND_ACCEL = 3800;
-export const AIR_ACCEL = 4200;
-export const AIR_DRAG = 40;
+export {
+  AIR_ACCEL,
+  AIR_DRAG,
+  GRAVITY_DOWN,
+  GRAVITY_UP,
+  GROUND_ACCEL,
+  JUMP_V,
+  MAX_FALL,
+} from "./feel";
 
 type SteerScene = {
   jobId: JobId;
@@ -33,9 +45,9 @@ export function applyPlayerMotion(scene: SteerScene, dt: number, a: ActionFrame,
   const body = scene.player.body as Phaser.Physics.Arcade.Body;
   const grounded = body.blocked.down || body.touching.down;
 
-  if (grounded) scene.coyote = 0.1;
+  if (grounded) scene.coyote = COYOTE;
   else scene.coyote -= dt;
-  if (a.justJump) scene.jumpBuf = 0.13;
+  if (a.justJump) scene.jumpBuf = JUMP_BUFFER;
   else scene.jumpBuf -= dt;
 
   if (a.downHeld && a.justJump && grounded) {
@@ -43,23 +55,20 @@ export function applyPlayerMotion(scene: SteerScene, dt: number, a: ActionFrame,
     scene.jumpBuf = 0;
   } else if ((grounded || scene.coyote > 0) && scene.jumpBuf > 0) {
     body.setVelocityY(JUMP_V);
-    if (Math.abs(a.moveX) > 0.12) body.setVelocityX(a.moveX * job.speed);
+    if (Math.abs(a.moveX) > MOVE_DEADZONE) body.setVelocityX(a.moveX * job.speed);
     scene.coyote = 0;
     scene.jumpBuf = 0;
     sfxPlay.jump();
   }
 
-  body.setGravityY(body.velocity.y < 0 ? GRAVITY_UP : GRAVITY_DOWN);
+  body.setGravityY(gravityForVy(body.velocity.y));
 
-  const accel = grounded ? GROUND_ACCEL : AIR_ACCEL;
-  if (Math.abs(a.moveX) > 0.12) {
-    body.setAccelerationX(a.moveX * accel);
-    scene.facing = a.moveX > 0 ? 1 : -1;
+  const steer = steerFor(grounded, a.moveX);
+  body.setAccelerationX(steer.accelX);
+  body.setDragX(steer.dragX);
+  if (steer.facing) {
+    scene.facing = steer.facing;
     scene.player.setFlipX(scene.facing < 0);
-    body.setDragX(0);
-  } else {
-    body.setAccelerationX(0);
-    body.setDragX(grounded ? 2800 : AIR_DRAG);
   }
   body.setMaxVelocity(grounded ? job.speed : job.speed + 80, MAX_FALL);
 
