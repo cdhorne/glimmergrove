@@ -2,6 +2,9 @@ import * as Phaser from "phaser";
 import { GAME_H, GAME_W, type JobId, type MapId } from "./content";
 import { BootScene } from "./scenes/BootScene";
 import { WorldScene } from "./scenes/WorldScene";
+import { installMotion } from "./motion";
+
+installMotion(WorldScene);
 
 export type CreateOpts = {
   parent: HTMLElement;
