@@ -9,6 +9,7 @@ import { bindPlayGestures } from "@/game/gestures";
 import { bindVisualViewport, requestLandscape } from "@/game/viewport";
 import { loadSave, writeSave } from "@/game/save";
 import { JOBS } from "@/game/content";
+import { YardPanel } from "@/components/yard-panel";
 import { unlockAudio, setMuted, isMuted } from "@/game/audio";
 
 export function PlayView() {
@@ -21,6 +22,8 @@ export function PlayView() {
   const setPaused = useGameUI((s) => s.setPaused);
   const bagOpen = useGameUI((s) => s.bagOpen);
   const setBag = useGameUI((s) => s.setBagOpen);
+  const yardOpen = useGameUI((s) => s.yardOpen);
+  const setYard = useGameUI((s) => s.setYardOpen);
   const setScreen = useGameUI((s) => s.setScreen);
   const save = useGameUI((s) => s.save);
   const refresh = useGameUI((s) => s.refreshSave);
@@ -35,6 +38,7 @@ export function PlayView() {
     const offHud = gameBus.on("hud", (snap) => setHud(snap as HudSnap));
     const offPause = gameBus.on("toggle-pause", () => setPaused(!useGameUI.getState().paused));
     const offBag = gameBus.on("toggle-bag", () => setBag(!useGameUI.getState().bagOpen));
+    const offYard = gameBus.on("open-yard", () => setYard(true));
     const offSaved = gameBus.on("saved", () => refresh());
     const parent = hostRef.current;
     let destroyed = false;
@@ -60,20 +64,21 @@ export function PlayView() {
       offHud();
       offPause();
       offBag();
+      offYard();
       offSaved();
       document.removeEventListener("visibilitychange", onHide);
       gameRef.current?.destroy(true);
       gameRef.current = null;
     };
-  }, [setHud, setPaused, setBag]);
+  }, [setHud, setPaused, setBag, setYard, refresh]);
 
   useEffect(() => {
-    gameBus.emit("set-paused", paused || bagOpen);
-  }, [paused, bagOpen]);
+    gameBus.emit("set-paused", paused || bagOpen || yardOpen);
+  }, [paused, bagOpen, yardOpen]);
 
   useEffect(() => {
-    if (bagOpen) refresh();
-  }, [bagOpen, refresh]);
+    if (bagOpen || yardOpen) refresh();
+  }, [bagOpen, yardOpen, refresh]);
 
   const equipped = save?.equipped ?? {};
 
@@ -178,6 +183,8 @@ export function PlayView() {
           </div>
         </div>
       ) : null}
+
+      {yardOpen ? <YardPanel save={save} onClose={() => setYard(false)} refresh={refresh} /> : null}
     </div>
   );
 }
