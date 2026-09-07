@@ -1,7 +1,8 @@
 import { expToNext, type ItemDef, type JobId, type MapId } from "./content";
+import { defaultEconomy, type EconomyState } from "./economy";
 
 const KEY = "glimmergrove-save-v1";
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 export type SaveData = {
   version: number;
@@ -20,6 +21,7 @@ export type SaveData = {
   equipped: { weapon?: ItemDef; armor?: ItemDef; acc?: ItemDef };
   heartwoodOpen: boolean;
   wardenDown: boolean;
+  economy: EconomyState;
 };
 
 export function defaultSave(job: JobId, name: string): SaveData {
@@ -40,12 +42,13 @@ export function defaultSave(job: JobId, name: string): SaveData {
     equipped: {},
     heartwoodOpen: false,
     wardenDown: false,
+    economy: defaultEconomy(),
   };
 }
 
 function migrate(raw: SaveData): SaveData {
   const base = defaultSave(raw.job ?? "guardian", raw.name ?? "Rowan");
-  return { ...base, ...raw, version: SAVE_VERSION };
+  return { ...base, ...raw, economy: raw.economy ?? base.economy, version: SAVE_VERSION };
 }
 
 export function loadSave(): SaveData | null {
