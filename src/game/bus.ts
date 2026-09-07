@@ -44,4 +44,8 @@ export type HudSnap = {
   prompt: string | null;
   dead: boolean;
   paused: boolean;
+  bagFeed: number;
+  bagBulk: number;
+  waterOk: boolean;
+  bloom: number;
 };

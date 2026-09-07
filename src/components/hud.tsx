@@ -36,7 +36,11 @@ export function Hud({ snap }: { snap: HudSnap }) {
                 Lv {snap.level} {snap.job}
               </span>
             </p>
-            <p className="font-mono text-xs tabular-nums text-fg-muted landscape:text-[10px]">{snap.glims}</p>
+            <p className="font-mono text-xs tabular-nums text-fg-muted landscape:text-[10px]">
+              {snap.glims}
+              {typeof snap.bagFeed === "number" ? ` · F${snap.bagFeed}` : ""}
+              {snap.waterOk === false ? " · dry" : ""}
+            </p>
           </div>
           <div className="mt-1 flex flex-col gap-0.5 landscape:mt-0.5 landscape:flex-row landscape:gap-1.5">
             <Bar value={snap.hp} max={snap.maxHp} tone="hp" className="h-1.5 w-full landscape:h-1 landscape:flex-1" />
