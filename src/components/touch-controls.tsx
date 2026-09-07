@@ -3,7 +3,7 @@ import { touch } from "@/game/input";
 import { cn } from "@/lib/utils";
 import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 
-const STICK_R = 56;
+const STICK_R = 64;
 
 function Hold({
   className,
@@ -21,6 +21,7 @@ function Hold({
   const [lit, setLit] = useState(false);
   function down(e: PointerEvent) {
     e.preventDefault();
+    e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setLit(true);
     on();
@@ -89,7 +90,7 @@ function Stick() {
 
   return (
     <div
-      className="relative size-32 touch-none"
+      className="relative h-full w-full touch-none"
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={up}
@@ -97,26 +98,27 @@ function Stick() {
       onContextMenu={(e) => e.preventDefault()}
       aria-label="Move"
     >
-      <div className="absolute inset-0 rounded-full border border-border bg-bg/40" />
-      <div
-        className={cn(
-          "absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-bg/80",
-          knob.active && "border-primary bg-primary/30",
-        )}
-        style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
-      />
+      <div className="pointer-events-none absolute bottom-3 left-3 size-32 rounded-full border border-border bg-bg/35">
+        <div
+          className={cn(
+            "absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-bg/80",
+            knob.active && "border-primary bg-primary/30",
+          )}
+          style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
+        />
+      </div>
     </div>
   );
 }
 
 export function TouchControls() {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-between px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 [@media(hover:hover)_and_(pointer:fine)]:hidden">
-      <div className="pointer-events-auto">
+    <div className="pointer-events-none absolute inset-0 z-20 [@media(hover:hover)_and_(pointer:fine)]:hidden">
+      <div className="pointer-events-auto absolute bottom-0 left-0 top-[38%] w-[48%] pl-[max(0.5rem,env(safe-area-inset-left))] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <Stick />
       </div>
-      <div className="pointer-events-auto flex items-end gap-2">
-        <div className="mb-2 flex flex-col gap-2">
+      <div className="pointer-events-auto absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.5rem,env(safe-area-inset-right))] flex items-end gap-2">
+        <div className="mb-3 flex flex-col gap-2">
           <Hold
             label="Talk"
             className="size-11"
@@ -153,8 +155,8 @@ export function TouchControls() {
         </div>
         <Hold
           label="Attack"
-          className="size-16"
-          icon={<Sword className="size-6" />}
+          className="size-[4.25rem]"
+          icon={<Sword className="size-7" />}
           on={() => {
             touch.attack = true;
           }}
@@ -164,8 +166,8 @@ export function TouchControls() {
         />
         <Hold
           label="Jump"
-          className="size-[4.5rem]"
-          icon={<ChevronsUp className="size-7" />}
+          className="size-[5rem]"
+          icon={<ChevronsUp className="size-8" />}
           on={() => {
             touch.jump = true;
           }}
