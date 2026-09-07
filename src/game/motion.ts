@@ -1,3 +1,4 @@
+import * as Phaser from "phaser";
 import type { ActionFrame } from "./input";
 import { JOBS, type JobId } from "./content";
 import { sfxPlay } from "./audio";
