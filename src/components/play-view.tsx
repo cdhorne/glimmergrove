@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { gameBus, type HudSnap } from "@/game/bus";
 import { useGameUI } from "@/game/store";
 import { bindWindow } from "@/game/input";
+import { bindPlayGestures } from "@/game/gestures";
 import { loadSave, writeSave } from "@/game/save";
 import { JOBS } from "@/game/content";
 import { unlockAudio, setMuted, isMuted } from "@/game/audio";
 
 export function PlayView() {
   const hostRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<{ destroy: (remove: boolean) => void } | null>(null);
   const hud = useGameUI((s) => s.hud);
   const setHud = useGameUI((s) => s.setHud);
@@ -26,6 +28,7 @@ export function PlayView() {
   useEffect(() => {
     unlockAudio();
     const unbind = bindWindow();
+    const ungest = shellRef.current ? bindPlayGestures(shellRef.current) : () => {};
     const offHud = gameBus.on("hud", (snap) => setHud(snap as HudSnap));
     const offPause = gameBus.on("toggle-pause", () => setPaused(!useGameUI.getState().paused));
     const offBag = gameBus.on("toggle-bag", () => setBag(!useGameUI.getState().bagOpen));
@@ -48,6 +51,7 @@ export function PlayView() {
     return () => {
       destroyed = true;
       unbind();
+      ungest();
       offHud();
       offPause();
       offBag();
@@ -69,10 +73,14 @@ export function PlayView() {
   const equipped = save?.equipped ?? {};
 
   return (
-    <div className="relative flex h-dvh flex-col overflow-hidden bg-bg">
+    <div
+      ref={shellRef}
+      className="relative flex h-dvh flex-col overflow-hidden bg-bg touch-none overscroll-none select-none"
+      style={{ touchAction: "none", overscrollBehavior: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+    >
       <div
         ref={hostRef}
-        className="relative min-h-0 flex-1 touch-none [&_canvas]:block [&_canvas]:h-full [&_canvas]:w-full"
+        className="relative min-h-0 flex-1 touch-none [&_canvas]:block [&_canvas]:h-full [&_canvas]:w-full [&_canvas]:touch-none"
       />
       {hud ? <Hud snap={hud} /> : null}
       <TouchControls />
@@ -110,7 +118,7 @@ export function PlayView() {
 
       {bagOpen ? (
         <div className="absolute inset-0 z-30 flex items-end justify-center bg-bg/50 sm:items-center">
-          <div className="w-full max-w-md rounded-t-[length:var(--radius-xl)] border border-border bg-bg-elevated p-5 sm:rounded-[length:var(--radius-xl)]">
+          <div className="w-full max-w-md rounded-t-[length:var(--radius-xl)] border border-border bg-bg-elevated p-5 sm:rounded-[length:var(--radius-xl)] touch-auto">
             <div className="flex items-baseline justify-between">
               <h2 className="font-display text-xl font-semibold">Bag</h2>
               <button type="button" className="text-sm text-fg-muted" onClick={() => setBag(false)}>
@@ -124,7 +132,7 @@ export function PlayView() {
               <li>Charm · {equipped.acc?.name ?? "None"}</li>
             </ul>
             <p className="mt-4 text-xs uppercase tracking-wider text-fg-subtle">Inventory</p>
-            <ul className="mt-1 max-h-40 overflow-auto text-sm">
+            <ul className="mt-1 max-h-40 overflow-auto text-sm touch-pan-y">
               {(save?.inventory ?? []).length === 0 ? (
                 <li className="text-fg-subtle">Empty — hunt Dewpath for drops.</li>
               ) : (
