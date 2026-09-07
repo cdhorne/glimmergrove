@@ -52,7 +52,7 @@ function Hold({
 
 function Stick() {
   const origin = useRef<{ x: number; y: number } | null>(null);
-  const [knob, setKnob] = useState({ x: 0, y: 0, active: false, ox: 72, oy: 72 });
+  const [knob, setKnob] = useState({ x: 0, y: 0, active: false });
 
   function apply(clientX: number, clientY: number) {
     const o = origin.current;
@@ -66,14 +66,13 @@ function Stick() {
     touch.moveX = nx / STICK_R;
     touch.moveY = ny / STICK_R;
     touch.down = touch.moveY > 0.55;
-    setKnob((k) => ({ ...k, x: nx, y: ny, active: true }));
+    setKnob({ x: nx, y: ny, active: true });
   }
 
   function down(e: PointerEvent) {
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     origin.current = { x: e.clientX, y: e.clientY };
-    setKnob({ x: 0, y: 0, active: true, ox: e.clientX, oy: e.clientY });
     apply(e.clientX, e.clientY);
   }
   function move(e: PointerEvent) {
@@ -86,12 +85,12 @@ function Stick() {
     touch.moveX = 0;
     touch.moveY = 0;
     touch.down = false;
-    setKnob({ x: 0, y: 0, active: false, ox: 72, oy: 72 });
+    setKnob({ x: 0, y: 0, active: false });
   }
 
   return (
     <div
-      className="relative h-full min-h-44 w-full touch-none"
+      className="relative h-full w-full touch-none"
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={up}
@@ -99,15 +98,15 @@ function Stick() {
       onContextMenu={(e) => e.preventDefault()}
       aria-label="Move"
     >
-      <div className="pointer-events-none absolute bottom-4 left-4 size-32 rounded-full border border-border bg-bg/30" />
-      {knob.active ? (
+      <div className="pointer-events-none absolute bottom-3 left-3 size-32 rounded-full border border-border bg-bg/35">
         <div
-          className="pointer-events-none absolute size-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-primary/30"
-          style={{ left: knob.ox + knob.x, top: knob.oy + knob.y }}
+          className={cn(
+            "absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-bg/80",
+            knob.active && "border-primary bg-primary/30",
+          )}
+          style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
         />
-      ) : (
-        <div className="pointer-events-none absolute bottom-10 left-10 size-14 rounded-full border border-border bg-bg/70" />
-      )}
+      </div>
     </div>
   );
 }
@@ -153,7 +152,7 @@ export function TouchControls() {
               touch.skill = false;
             }}
           />
-        </n>
+        </div>
         <Hold
           label="Attack"
           className="size-[4.25rem]"
