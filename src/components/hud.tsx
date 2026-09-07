@@ -24,7 +24,7 @@ export function Hud({ snap }: { snap: HudSnap }) {
   const setPaused = useGameUI((s) => s.setPaused);
   const setBag = useGameUI((s) => s.setBagOpen);
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
       <div className="pointer-events-auto mx-auto flex max-w-3xl items-start gap-3">
         <div className="min-w-0 flex-1 rounded-[length:var(--radius-lg)] border border-border bg-bg/80 px-3 py-2 backdrop-blur-sm">
           <div className="flex items-baseline justify-between gap-2">

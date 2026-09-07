@@ -28,6 +28,8 @@ export function createGame(opts: CreateOpts) {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: GAME_W,
       height: GAME_H,
+      expandParent: false,
+      autoRound: true,
     },
     fps: { target: 60, min: 30, smoothStep: true },
     callbacks: {
