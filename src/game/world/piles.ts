@@ -26,12 +26,14 @@ export function shouldSpawn(
 export function skinFor(kind: string): string {
   if (kind === "bloom") return "dewslug";
   if (kind === "stump") return "capling";
+  if (kind === "bramble") return "warden";
   return kind;
 }
 
 export function pileAmount(kind: string): number {
   if (kind === "bloom") return 3;
   if (kind === "stump") return 2;
+  if (kind === "bramble") return 2;
   return 1;
 }
 

@@ -252,6 +252,7 @@ export const MONSTERS: Record<
     hitW: number;
     hitH: number;
     knockback: number;
+    mass: number;
     blockPierce: boolean;
   }
 > = {
@@ -267,6 +268,7 @@ export const MONSTERS: Record<
     hitW: 54,
     hitH: 42,
     knockback: 1,
+    mass: 1,
     blockPierce: false,
   },
   capling: {
@@ -281,6 +283,7 @@ export const MONSTERS: Record<
     hitW: 46,
     hitH: 58,
     knockback: 1,
+    mass: 1.05,
     blockPierce: false,
   },
   warden: {
@@ -294,8 +297,8 @@ export const MONSTERS: Record<
     bodyH: 110,
     hitW: 118,
     hitH: 132,
-    knockback: 0,
+    knockback: 0.35,
+    mass: 3.1,
     blockPierce: true,
   },
 };
-
