@@ -4,13 +4,14 @@
  *
  * Hooks: create, spawnActors, spawnMob, killMob, checkPits, emitHud, tryInteract.
  * Does not replace combat, wander, or input.
+ * Live verbs only: grant/collect on kill. Attune stays in the Yard.
  */
 import * as Phaser from "phaser";
 import { GAME_H, MAPS, type MonsterKind } from "../content";
 import { defaultEconomy, pileOf } from "../economy";
 import { gameBus } from "../bus";
 import type { SaveData } from "../save";
-import { dumpKind, grantPile, hudEconomy, pileAmount, shouldSpawn, skinFor } from "./piles";
+import { dumpKind, hudEconomy, planKill, shouldSpawn, skinFor } from "./piles";
 
 type SceneLike = {
   mapId: string;
@@ -89,13 +90,15 @@ export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
 
   const prevKill = proto.killMob;
   proto.killMob = function killMobPiles(mob) {
-    const pile = pileOf(mob.kind);
-    if (pile && this.save.economy) {
-      const { prompt } = grantPile(this.save.economy, pile, pileAmount(mob.kind));
-      this.prompt = prompt;
-      this.time.delayedCall(1400, () => {
-        if (this.prompt?.startsWith("Bag")) this.prompt = null;
-      });
+    if (this.save.economy) {
+      const { eco, prompt } = planKill(this.save.economy, mob.kind, Math.random);
+      this.save.economy = eco;
+      if (prompt) {
+        this.prompt = prompt;
+        this.time.delayedCall(1400, () => {
+          if (this.prompt === prompt) this.prompt = null;
+        });
+      }
     }
     prevKill.call(this, mob);
   };
