@@ -10,8 +10,14 @@ import {
   computeStick,
   gravityForVy,
   jumpPeakPx,
+  ledgePx,
+  ledgeY,
+  GROUND_Y,
   steerFor,
   visualBox,
+  knockVel,
+  playerKnockVel,
+  PLAYER_KNOCK_X,
 } from "./feel.ts";
 
 test("hop peaks in the Maple band, not the old float", () => {
@@ -21,6 +27,15 @@ test("hop peaks in the Maple band, not the old float", () => {
   assert.equal(gravityForVy(-10), GRAVITY_UP);
   assert.equal(gravityForVy(10), GRAVITY_DOWN);
   assert.ok(JUMP_V < 0);
+});
+
+test("one ledge is inside a single hop", () => {
+  const hop = jumpPeakPx();
+  const step = ledgePx();
+  assert.ok(step < hop, `step ${step} vs hop ${hop}`);
+  assert.ok(step * 2 > hop, "two steps need a mid ledge");
+  assert.equal(ledgeY(0), GROUND_Y);
+  assert.equal(ledgeY(1), GROUND_Y - step);
 });
 
 test("air steer is at least as strong as ground so jump+attack can still turn", () => {
@@ -58,4 +73,22 @@ test("landscape chrome stays in the corners", () => {
   assert.ok(CHROME.landscapeStickHPx <= 120);
   assert.ok(CHROME.landscapeJumpPx <= 56);
   assert.ok(CHROME.landscapeAttackPx <= 48);
+});
+
+test("knockback shoves away and scales with mass", () => {
+  const light = knockVel(1, 1, 1);
+  const heavy = knockVel(1, 3, 1);
+  assert.ok(light.vx > 0);
+  assert.ok(light.vy < 0);
+  assert.ok(heavy.vx < light.vx, "heavier travels less");
+  assert.ok(heavy.stun > 0);
+  const left = knockVel(-4, 1, 1);
+  assert.ok(left.vx < 0);
+});
+
+test("player knock is a short stun, not a teleport", () => {
+  const k = playerKnockVel(-1);
+  assert.equal(k.vx, -PLAYER_KNOCK_X);
+  assert.ok(k.vy < 0);
+  assert.ok(k.stun > 0.1 && k.stun < 0.35);
 });

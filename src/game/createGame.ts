@@ -3,11 +3,13 @@ import { GAME_H, GAME_W, type JobId, type MapId } from "./content";
 import { BootScene } from "./scenes/BootScene";
 import { WorldScene } from "./scenes/WorldScene";
 import { installMotion } from "./motion";
+import { installCombat } from "./installCombat";
 import { registerKinds } from "./world/kinds";
 import { installPiles } from "./world/install";
 
 registerKinds();
 installMotion(WorldScene);
+installCombat(WorldScene);
 installPiles(WorldScene);
 
 export type CreateOpts = {
