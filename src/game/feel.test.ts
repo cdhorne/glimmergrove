@@ -10,6 +10,9 @@ import {
   computeStick,
   gravityForVy,
   jumpPeakPx,
+  ledgePx,
+  ledgeY,
+  GROUND_Y,
   steerFor,
   visualBox,
   knockVel,
@@ -24,6 +27,15 @@ test("hop peaks in the Maple band, not the old float", () => {
   assert.equal(gravityForVy(-10), GRAVITY_UP);
   assert.equal(gravityForVy(10), GRAVITY_DOWN);
   assert.ok(JUMP_V < 0);
+});
+
+test("one ledge is inside a single hop", () => {
+  const hop = jumpPeakPx();
+  const step = ledgePx();
+  assert.ok(step < hop, `step ${step} vs hop ${hop}`);
+  assert.ok(step * 2 > hop, "two steps need a mid ledge");
+  assert.equal(ledgeY(0), GROUND_Y);
+  assert.equal(ledgeY(1), GROUND_Y - step);
 });
 
 test("air steer is at least as strong as ground so jump+attack can still turn", () => {

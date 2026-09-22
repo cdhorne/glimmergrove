@@ -1,8 +1,8 @@
 /**
  * Extra kinds and Dewpath slots. Call once from createGame (registerKinds).
- * Do not import from combat or feel. Mutates MAPS/MONSTERS at boot.
+ * Do not import from combat. Mutates MAPS/MONSTERS at boot.
  */
-import { MAPS, MONSTERS } from "../content";
+import { MAPS, MONSTERS, GROUND_Y, ledgeY } from "../content";
 
 const EXTRA_STATS = {
   bloom: {
@@ -53,11 +53,11 @@ const EXTRA_STATS = {
 };
 
 const EXTRA_SLOTS: { x: number; y: number; kind: string; when?: "bloom" }[] = [
-  { x: 620, y: 468, kind: "stump" },
-  { x: 900, y: 378, kind: "bloom", when: "bloom" },
-  { x: 1120, y: 468, kind: "bloom", when: "bloom" },
-  { x: 1860, y: 468, kind: "bramble" },
-  { x: 2460, y: 468, kind: "bramble" },
+  { x: 620, y: GROUND_Y, kind: "stump" },
+  { x: 900, y: ledgeY(1), kind: "bloom", when: "bloom" },
+  { x: 1120, y: GROUND_Y, kind: "bloom", when: "bloom" },
+  { x: 1860, y: GROUND_Y, kind: "bramble" },
+  { x: 2460, y: GROUND_Y, kind: "bramble" },
 ];
 
 let registered = false;
@@ -74,8 +74,8 @@ export function registerKinds() {
   }
   const heart = MAPS.heartwood;
   for (const slot of [
-    { x: 720, y: 468, kind: "bramble" as const },
-    { x: 1480, y: 468, kind: "bramble" as const },
+    { x: 720, y: GROUND_Y, kind: "bramble" as const },
+    { x: 1480, y: GROUND_Y, kind: "bramble" as const },
   ]) {
     if (heart.monsters.some((s) => s.kind === slot.kind && s.x === slot.x)) continue;
     heart.monsters.push(slot as (typeof heart.monsters)[number]);
