@@ -8,7 +8,7 @@
  */
 import * as Phaser from "phaser";
 import { GAME_H, MAPS, type MonsterKind } from "../content";
-import { defaultEconomy, pileOf } from "../economy";
+import { defaultEconomy } from "../economy";
 import { gameBus } from "../bus";
 import type { SaveData } from "../save";
 import { dumpKind, hudEconomy, planKill, shouldSpawn, skinFor } from "./piles";
