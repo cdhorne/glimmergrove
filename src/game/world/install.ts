@@ -79,6 +79,10 @@ export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
         mob.setScale(0.48);
         mob.setTint(0x8a6a48);
       }
+      if (kind === "bramble") {
+        mob.setScale(0.36);
+        mob.setTint(0x3d5c3a);
+      }
     }
     return mob;
   };
