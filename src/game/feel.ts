@@ -60,3 +60,25 @@ export function visualBox(
   const y = Math.round(vv?.offsetTop ?? 0);
   return { x, y, w, h, orientation: w >= h ? ("landscape" as const) : ("portrait" as const) };
 }
+
+export const HIT_STUN = 0.2;
+export const PLAYER_KNOCK_X = 300;
+export const PLAYER_KNOCK_Y = -240;
+export const MOB_KNOCK_X = 280;
+export const MOB_KNOCK_Y = -160;
+
+/** dir is the shove direction (hit target travels this way). mass 1 = slug. */
+export function knockVel(dir: number, mass: number, power = 1) {
+  const m = Math.max(0.25, mass);
+  const sign = dir >= 0 ? 1 : -1;
+  return {
+    vx: (sign * (MOB_KNOCK_X * power)) / m,
+    vy: (MOB_KNOCK_Y * power) / Math.sqrt(m),
+    stun: HIT_STUN * (0.7 + 0.5 / m),
+  };
+}
+
+export function playerKnockVel(away: number) {
+  const sign = away >= 0 ? 1 : -1;
+  return { vx: sign * PLAYER_KNOCK_X, vy: PLAYER_KNOCK_Y, stun: HIT_STUN };
+}
