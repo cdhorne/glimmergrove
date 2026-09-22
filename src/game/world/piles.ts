@@ -9,7 +9,7 @@ import {
   pileOf,
   type EconomyState,
   type Pile,
-} from "../economy";
+} from "../economy.ts";
 
 export type SpawnSlot = { kind: string; when?: "bloom" };
 
