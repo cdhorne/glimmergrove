@@ -1,3 +1,5 @@
+import { GROUND_Y, ledgeY } from "./feel";
+
 export const GAME_W = 960;
 export const GAME_H = 540;
 
@@ -95,7 +97,6 @@ export const JOBS: Record<JobId, JobDef> = {
   },
 };
 
-
 export type PlatformDef = {
   x: number;
   y: number;
@@ -132,12 +133,18 @@ export type MapDef = {
   monsters: MonsterSpawn[];
 };
 
-const GROUND_Y = 468;
 const GROUND_H = 72;
+const WOOD_H = 26;
 
 function ground(width: number): PlatformDef {
   return { x: 0, y: GROUND_Y, w: width, h: GROUND_H, kind: "grass" };
 }
+
+function wood(x: number, steps: number, w: number): PlatformDef {
+  return { x, y: ledgeY(steps), w, h: WOOD_H, kind: "wood", oneWay: true };
+}
+
+export { GROUND_Y, ledgeY };
 
 export const MAPS: Record<MapId, MapDef> = {
   haven: {
@@ -148,9 +155,9 @@ export const MAPS: Record<MapId, MapDef> = {
     spawn: { x: 220, y: 360 },
     platforms: [
       ground(2400),
-      { x: 540, y: 360, w: 220, h: 28, kind: "wood", oneWay: true },
-      { x: 980, y: 300, w: 180, h: 28, kind: "wood", oneWay: true },
-      { x: 1500, y: 380, w: 260, h: 28, kind: "wood", oneWay: true },
+      wood(540, 1, 220),
+      wood(980, 2, 180),
+      wood(1500, 1, 260),
     ],
     pits: [],
     portals: [{ x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" }],
@@ -166,11 +173,11 @@ export const MAPS: Record<MapId, MapDef> = {
     platforms: [
       { x: 0, y: GROUND_Y, w: 920, h: GROUND_H, kind: "grass" },
       { x: 1088, y: GROUND_Y, w: 2312, h: GROUND_H, kind: "grass" },
-      { x: 820, y: 378, w: 230, h: 26, kind: "wood", oneWay: true },
-      { x: 1000, y: 286, w: 200, h: 26, kind: "wood", oneWay: true },
-      { x: 1600, y: 340, w: 240, h: 26, kind: "wood", oneWay: true },
-      { x: 2100, y: 300, w: 200, h: 26, kind: "wood", oneWay: true },
-      { x: 2580, y: 360, w: 280, h: 26, kind: "wood", oneWay: true },
+      wood(820, 1, 230),
+      wood(1000, 2, 200),
+      wood(1600, 2, 240),
+      wood(2100, 2, 200),
+      wood(2580, 2, 280),
     ],
     pits: [{ x: 920, w: 168 }],
     portals: [
@@ -181,10 +188,10 @@ export const MAPS: Record<MapId, MapDef> = {
       { x: 520, y: GROUND_Y, kind: "dewslug" },
       { x: 740, y: GROUND_Y, kind: "dewslug" },
       { x: 1400, y: GROUND_Y, kind: "capling" },
-      { x: 1680, y: 340, kind: "dewslug" },
+      { x: 1680, y: ledgeY(2), kind: "dewslug" },
       { x: 1980, y: GROUND_Y, kind: "capling" },
       { x: 2320, y: GROUND_Y, kind: "dewslug" },
-      { x: 2640, y: 360, kind: "capling" },
+      { x: 2640, y: ledgeY(2), kind: "capling" },
       { x: 2880, y: GROUND_Y, kind: "capling" },
     ],
   },
@@ -196,9 +203,9 @@ export const MAPS: Record<MapId, MapDef> = {
     spawn: { x: 280, y: 360 },
     platforms: [
       ground(2000),
-      { x: 620, y: 340, w: 200, h: 26, kind: "wood", oneWay: true },
-      { x: 1180, y: 300, w: 220, h: 26, kind: "wood", oneWay: true },
-      { x: 1560, y: 360, w: 180, h: 26, kind: "wood", oneWay: true },
+      wood(620, 1, 200),
+      wood(1180, 2, 220),
+      wood(1560, 1, 180),
     ],
     pits: [],
     portals: [{ x: 80, y: GROUND_Y, to: "dewpath", label: "Dewpath" }],
