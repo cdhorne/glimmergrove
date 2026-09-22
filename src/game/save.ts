@@ -2,7 +2,7 @@ import { expToNext, type ItemDef, type JobId, type MapId } from "./content";
 import { defaultEconomy, type EconomyState } from "./economy";
 
 const KEY = "glimmergrove-save-v1";
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 export type SaveData = {
   version: number;
@@ -48,7 +48,11 @@ export function defaultSave(job: JobId, name: string): SaveData {
 
 function migrate(raw: SaveData): SaveData {
   const base = defaultSave(raw.job ?? "guardian", raw.name ?? "Rowan");
-  return { ...base, ...raw, economy: raw.economy ?? base.economy, version: SAVE_VERSION };
+  const economy = { ...base.economy, ...(raw.economy ?? {}) };
+  economy.tray = economy.tray ?? base.economy.tray;
+  economy.loadout = economy.loadout ?? base.economy.loadout;
+  economy.board = economy.board ?? base.economy.board;
+  return { ...base, ...raw, economy, version: SAVE_VERSION };
 }
 
 export function loadSave(): SaveData | null {

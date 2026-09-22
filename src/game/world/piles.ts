@@ -3,13 +3,15 @@
  * Do not call from combat, input, or feel.
  */
 import {
-  addToBag,
   BAG_CAP,
   bagTotal,
   pileOf,
   type EconomyState,
   type Pile,
 } from "../economy";
+import { collect } from "../loot/collect";
+import { rarityFor, rollPiece } from "../loot/roll";
+import type { SlotId } from "../loot/catalog";
 
 export type SpawnSlot = { kind: string; when?: "bloom" };
 
@@ -42,14 +44,39 @@ export function grantPile(
   pile: Pile,
   n: number,
 ): { eco: EconomyState; prompt: string } {
-  const next = addToBag(eco.bag, pile, n);
-  const gained = next[pile] - eco.bag[pile];
-  eco.bag = next;
-  if (gained < n) {
-    if (pile === "feed") eco.lostThisRun.pitFeed += n - gained;
-    return { eco, prompt: "Bag full — drip" };
+  const { eco: next, prompt } = collect(eco, { kind: "fragment", pile, n });
+  Object.assign(eco, next);
+  if (prompt.startsWith("Bag +")) {
+    return { eco, prompt: `${prompt}  (${bagTotal(eco.bag)}/${BAG_CAP})` };
   }
-  return { eco, prompt: `Bag +${gained} ${pile}  (${bagTotal(eco.bag)}/${BAG_CAP})` };
+  return { eco, prompt };
+}
+
+export function slotFor(kind: string): SlotId {
+  if (kind === "warden" || kind === "bramble") return "core";
+  if (kind === "capling" || kind === "stump") return "anchor";
+  return "reach";
+}
+
+/** Live drop plan. Fragments always. A piece only when rarity hits and it is not worse. */
+export function planKill(
+  eco: EconomyState,
+  kind: string,
+  rng: () => number,
+): { eco: EconomyState; prompt: string } {
+  const pile = pileOf(kind);
+  let next = eco;
+  let prompt = "";
+  if (pile) {
+    const granted = grantPile(next, pile, pileAmount(kind));
+    next = granted.eco;
+    prompt = granted.prompt;
+  }
+  const rarity = rarityFor(rng(), kind === "warden");
+  if (!rarity) return { eco: next, prompt };
+  const piece = rollPiece(slotFor(kind), rarity, rng);
+  const got = collect(next, { kind: "piece", piece });
+  return { eco: got.eco, prompt: got.prompt === "Left as dust" ? prompt : got.prompt };
 }
 
 export function dumpKind(eco: EconomyState, kind: string): EconomyState {
@@ -63,5 +90,6 @@ export function hudEconomy(eco: EconomyState | undefined) {
     bagBulk: eco?.bag.bulk ?? 0,
     waterOk: eco?.waterOk ?? true,
     bloom: eco?.flags.bloom ?? 0,
+    trayPieces: eco?.tray.pieces.length ?? 0,
   };
 }

@@ -1,12 +1,22 @@
 /** Demo slice: Feed bag, one digester load, one cover store, bloom flag, water lamp.
  * Load = scheduled eat. Dump = pit. Store = cover / cistern. Water is an outcome.
+ * Tray + loadout + board live here so save stays one object.
  */
+
+import { emptyBoard, type BoardState } from "./loadout/board";
+import type { Piece } from "./loot/catalog";
 
 export type Pile = "feed" | "oil" | "bulk" | "ore" | "ash";
 
 export const BAG_CAP = 12;
 
 export type Bag = Record<Pile, number>;
+
+export type Loadout = {
+  core: Piece | null;
+  reach: Piece | null;
+  anchor: Piece | null;
+};
 
 export type EconomyState = {
   bag: Bag;
@@ -15,10 +25,17 @@ export type EconomyState = {
   flags: { bloom: 0 | 1 };
   waterOk: boolean;
   lostThisRun: { pitFeed: number };
+  tray: { pieces: Piece[] };
+  loadout: Loadout;
+  board: BoardState;
 };
 
 export function emptyBag(): Bag {
   return { feed: 0, oil: 0, bulk: 0, ore: 0, ash: 0 };
+}
+
+export function emptyLoadout(): Loadout {
+  return { core: null, reach: null, anchor: null };
 }
 
 export function defaultEconomy(): EconomyState {
@@ -29,6 +46,9 @@ export function defaultEconomy(): EconomyState {
     flags: { bloom: 0 },
     waterOk: true,
     lostThisRun: { pitFeed: 0 },
+    tray: { pieces: [] },
+    loadout: emptyLoadout(),
+    board: emptyBoard(),
   };
 }
 

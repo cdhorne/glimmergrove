@@ -48,4 +48,5 @@ export type HudSnap = {
   bagBulk: number;
   waterOk: boolean;
   bloom: number;
+  trayPieces: number;
 };
