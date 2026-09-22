@@ -12,6 +12,9 @@ import {
   jumpPeakPx,
   steerFor,
   visualBox,
+  knockVel,
+  playerKnockVel,
+  PLAYER_KNOCK_X,
 } from "./feel.ts";
 
 test("hop peaks in the Maple band, not the old float", () => {
@@ -58,4 +61,22 @@ test("landscape chrome stays in the corners", () => {
   assert.ok(CHROME.landscapeStickHPx <= 120);
   assert.ok(CHROME.landscapeJumpPx <= 56);
   assert.ok(CHROME.landscapeAttackPx <= 48);
+});
+
+test("knockback shoves away and scales with mass", () => {
+  const light = knockVel(1, 1, 1);
+  const heavy = knockVel(1, 3, 1);
+  assert.ok(light.vx > 0);
+  assert.ok(light.vy < 0);
+  assert.ok(heavy.vx < light.vx, "heavier travels less");
+  assert.ok(heavy.stun > 0);
+  const left = knockVel(-4, 1, 1);
+  assert.ok(left.vx < 0);
+});
+
+test("player knock is a short stun, not a teleport", () => {
+  const k = playerKnockVel(-1);
+  assert.equal(k.vx, -PLAYER_KNOCK_X);
+  assert.ok(k.vy < 0);
+  assert.ok(k.stun > 0.1 && k.stun < 0.35);
 });

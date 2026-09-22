@@ -32,6 +32,7 @@ type SteerScene = {
   skipOneWay: number;
   facing: number;
   attackLock: number;
+  knockLock: number;
   attackCd: number;
   skillCd: number;
   invuln: number;
@@ -63,14 +64,20 @@ export function applyPlayerMotion(scene: SteerScene, dt: number, a: ActionFrame,
 
   body.setGravityY(gravityForVy(body.velocity.y));
 
-  const steer = steerFor(grounded, a.moveX);
-  body.setAccelerationX(steer.accelX);
-  body.setDragX(steer.dragX);
-  if (steer.facing) {
-    scene.facing = steer.facing;
-    scene.player.setFlipX(scene.facing < 0);
+  scene.knockLock = Math.max(0, (scene.knockLock ?? 0) - dt);
+  if (scene.knockLock > 0) {
+    body.setAccelerationX(0);
+    body.setDragX(grounded ? 900 : 40);
+  } else {
+    const steer = steerFor(grounded, a.moveX);
+    body.setAccelerationX(steer.accelX);
+    body.setDragX(steer.dragX);
+    if (steer.facing) {
+      scene.facing = steer.facing;
+      scene.player.setFlipX(scene.facing < 0);
+    }
   }
-  body.setMaxVelocity(grounded ? job.speed : job.speed + 80, MAX_FALL);
+  body.setMaxVelocity(grounded ? job.speed + (scene.knockLock > 0 ? 140 : 0) : job.speed + 80, MAX_FALL);
 
   if (scene.attackLock <= 0) {
     if (grounded && Math.abs(body.velocity.x) > 30) scene.playSafe(`${scene.jobId}-run`);
