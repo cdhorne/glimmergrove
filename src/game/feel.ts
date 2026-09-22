@@ -11,6 +11,12 @@ export const MOVE_DEADZONE = 0.12;
 export const COYOTE = 0.1;
 export const JUMP_BUFFER = 0.13;
 
+export const HIT_STUN = 0.2;
+export const PLAYER_KNOCK_X = 300;
+export const PLAYER_KNOCK_Y = -240;
+export const MOB_KNOCK_X = 280;
+export const MOB_KNOCK_Y = -160;
+
 export const STICK_R = 56;
 
 export const CHROME = {
@@ -61,24 +67,24 @@ export function visualBox(
   return { x, y, w, h, orientation: w >= h ? ("landscape" as const) : ("portrait" as const) };
 }
 
-export const HIT_STUN = 0.2;
-export const PLAYER_KNOCK_X = 300;
-export const PLAYER_KNOCK_Y = -240;
-export const MOB_KNOCK_X = 280;
-export const MOB_KNOCK_Y = -160;
+export type Knock = { vx: number; vy: number; stun: number };
 
-/** dir is the shove direction (hit target travels this way). mass 1 = slug. */
-export function knockVel(dir: number, mass: number, power = 1) {
+/** `dir` is travel direction after the hit. mass 1 = dewslug. */
+export function knockVel(dir: number, mass: number, power = 1): Knock {
   const m = Math.max(0.25, mass);
-  const sign = dir >= 0 ? 1 : -1;
+  const sign = dir < 0 ? -1 : 1;
   return {
-    vx: (sign * (MOB_KNOCK_X * power)) / m,
+    vx: (sign * MOB_KNOCK_X * power) / m,
     vy: (MOB_KNOCK_Y * power) / Math.sqrt(m),
     stun: HIT_STUN * (0.7 + 0.5 / m),
   };
 }
 
-export function playerKnockVel(away: number) {
-  const sign = away >= 0 ? 1 : -1;
+export function playerKnockVel(away: number): Knock {
+  const sign = away < 0 ? -1 : 1;
   return { vx: sign * PLAYER_KNOCK_X, vy: PLAYER_KNOCK_Y, stun: HIT_STUN };
+}
+
+export function knockAway(fromX: number, toX: number) {
+  return toX >= fromX ? 1 : -1;
 }

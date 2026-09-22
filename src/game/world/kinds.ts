@@ -73,8 +73,11 @@ export function registerKinds() {
     dew.monsters.push(s as (typeof dew.monsters)[number]);
   }
   const heart = MAPS.heartwood;
-  if (!heart.monsters.some((s) => s.kind === "bramble")) {
-    heart.monsters.push({ x: 720, y: 468, kind: "bramble" as (typeof heart.monsters)[number]["kind"] });
-    heart.monsters.push({ x: 1480, y: 468, kind: "bramble" as (typeof heart.monsters)[number]["kind"] });
+  for (const slot of [
+    { x: 720, y: 468, kind: "bramble" as const },
+    { x: 1480, y: 468, kind: "bramble" as const },
+  ]) {
+    if (heart.monsters.some((s) => s.kind === slot.kind && s.x === slot.x)) continue;
+    heart.monsters.push(slot as (typeof heart.monsters)[number]);
   }
 }
