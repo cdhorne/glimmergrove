@@ -19,6 +19,11 @@ export const MOB_KNOCK_Y = -160;
 
 export const STICK_R = 56;
 
+/** Floor top. Ledges are this minus n × ledgePx(). */
+export const GROUND_Y = 468;
+/** Fraction of hop used as one comfortable step. */
+export const LEDGE_RATIO = 0.62;
+
 export const CHROME = {
   landscapeStickW: 0.32,
   landscapeStickHPx: 112,
@@ -29,6 +34,14 @@ export const CHROME = {
 
 export function jumpPeakPx(v = JUMP_V, g = GRAVITY_UP) {
   return (v * v) / (2 * g);
+}
+
+export function ledgePx() {
+  return Math.round(jumpPeakPx() * LEDGE_RATIO);
+}
+
+export function ledgeY(steps: number, groundY = GROUND_Y) {
+  return groundY - steps * ledgePx();
 }
 
 export function gravityForVy(vy: number) {
