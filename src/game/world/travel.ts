@@ -1,6 +1,6 @@
-import { MAPS, type MapId } from "../content";
-import { keepWorldPrompt, portalLocked } from "./rules";
-import type { ActionFrame } from "../input";
+import { MAPS, type MapId } from "../content.ts";
+import { keepWorldPrompt, portalLocked } from "./rules.ts";
+import type { ActionFrame } from "../input.ts";
 
 export type TravelState = {
   mapId: MapId;
