@@ -14,6 +14,7 @@ type SceneLike = {
   popNumber?: (x: number, y: number, text: string, tone: string) => void;
   maxHp: () => number;
   updatePlayer: (dt: number, a: ActionFrame, time: number) => void;
+  updateInteract: (dt: number, a: ActionFrame) => void;
   emitHud: () => void;
 };
 
@@ -26,12 +27,19 @@ export function installUse(SceneCls: { prototype: Record<string, unknown> }) {
     if (a.justUse) tryUse(this);
   };
 
+  const prevInteract = proto.updateInteract;
+  proto.updateInteract = function updateInteractUse(dt, a) {
+    const keep = this.prompt;
+    prevInteract.call(this, dt, a);
+    if (keep?.startsWith("Used") || keep === "Nothing to use") this.prompt = keep;
+  };
+
   const prevHud = proto.emitHud;
   proto.emitHud = function emitHudUse() {
     const emit = gameBus.emit.bind(gameBus);
     gameBus.emit = (event: string, ...args: unknown[]) => {
       if (event === "hud" && args[0] && typeof args[0] === "object") {
-        const snap = args[0] as { canUse?: boolean; skillCost?: number; hp?: number; maxHp?: number };
+        const snap = args[0] as { canUse?: boolean; skillCost?: number };
         const max = this.maxHp();
         snap.canUse = max > 0 && this.save.hp / max <= 0.4;
         snap.skillCost = JOBS[this.jobId].skillCost;
