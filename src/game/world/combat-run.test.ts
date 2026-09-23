@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { inStrikeLane, planHurt, planTouch, rollStrike, strikeReach } from "./combat-run.ts";
+import { boltSpec, inStrikeLane, planHurt, planTouch, rollStrike, strikeReach } from "./combat-run.ts";
 import { JOBS } from "../content.ts";
 import { PLAYER_KNOCK_X } from "../feel.ts";
 
@@ -42,4 +42,13 @@ test("a slug in front of the guardian is in the lane", () => {
     inStrikeLane({ playerX: 100, playerY: 400, facing: 1, mobX: 400, mobY: 400, hitW: 54, reach: 70 }),
     false,
   );
+});
+
+test("mage and archer fire visible bolts; fighter does not", () => {
+  const orb = boltSpec(JOBS.weaver.attack);
+  const volley = boltSpec(JOBS.weaver.skill);
+  assert.equal(orb?.key, "orb");
+  assert.equal(volley?.shots, 3);
+  assert.equal(boltSpec(JOBS.ranger.attack)?.key, "arrow");
+  assert.equal(boltSpec(JOBS.guardian.attack), null);
 });
