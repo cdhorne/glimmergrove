@@ -27,7 +27,7 @@ export type SaveData = {
 export function defaultSave(job: JobId, name: string): SaveData {
   return {
     version: SAVE_VERSION,
-    name: name.trim() || "Rowan",
+    name: name.trim() || "Player",
     job,
     level: 1,
     exp: 0,
@@ -47,7 +47,7 @@ export function defaultSave(job: JobId, name: string): SaveData {
 }
 
 function migrate(raw: SaveData): SaveData {
-  const base = defaultSave(raw.job ?? "guardian", raw.name ?? "Rowan");
+  const base = defaultSave(raw.job ?? "guardian", raw.name ?? "Player");
   const economy = raw.economy ?? base.economy;
   const lost = economy.lostThisRun as { gapFeed?: number; pitFeed?: number };
   economy.lostThisRun = { gapFeed: lost.gapFeed ?? lost.pitFeed ?? 0 };

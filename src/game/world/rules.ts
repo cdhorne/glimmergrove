@@ -27,7 +27,7 @@ export function keepWorldPrompt(prompt: string | null) {
   if (!prompt) return false;
   return (
     prompt.startsWith("Found") ||
-    prompt.startsWith("The Warden") ||
+    prompt.startsWith("The boss") ||
     prompt.startsWith("Rested") ||
     prompt.startsWith("Used") ||
     prompt === "Nothing to use"
