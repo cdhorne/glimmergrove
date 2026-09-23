@@ -3,7 +3,6 @@ import type { ActionFrame } from "./input";
 import { JOBS, type JobId } from "./content";
 import { sfxPlay } from "./audio";
 import {
-  AIR_DRAG,
   GRAVITY_DOWN,
   JUMP_V,
   JUMP_BUFFER,
@@ -77,7 +76,8 @@ export function applyPlayerMotion(scene: SteerScene, dt: number, a: ActionFrame,
       scene.player.setFlipX(scene.facing < 0);
     }
   }
-  body.setMaxVelocity(grounded ? job.speed + (scene.knockLock > 0 ? 140 : 0) : job.speed + 80, MAX_FALL);
+  const capX = job.speed + (scene.knockLock > 0 ? 140 : 0);
+  body.setMaxVelocity(capX, MAX_FALL);
 
   if (scene.attackLock <= 0) {
     if (grounded && Math.abs(body.velocity.x) > 30) scene.playSafe(`${scene.jobId}-run`);
