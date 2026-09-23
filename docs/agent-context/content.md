@@ -37,13 +37,17 @@ Skies stay `haven-sky.jpg` etc.
 | `stump` | Stump | capling + tint |
 | `bramble` | Bramble | warden + tint |
 
-`skin.ts` is the only place that knows sheet + tint + scale. `piles.ts`
-`skinFor` delegates to it.
+`skin.ts` is the only place that knows sheet + tint + scale. WorldScene
+and `harvest.ts` read it; they do not keep a parallel look table.
 
 ## Currency and verbs
 
 Save field is `glims`. UI may say gold. Verbs are attack, skill, jump,
 interact, use. Do not name potions, dew, or grove-only rites in input.
+
+Drop *names* may change. Drop template ids (`iron-sword`, …) are new
+rolls only — inventory snapshots already in a save keep their baked
+`id` / `name`. Do not rename slugs or save keys.
 
 ## Adding a setting later
 
