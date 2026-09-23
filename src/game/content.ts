@@ -1,4 +1,4 @@
-import { GROUND_Y, ledgeY } from "./feel";
+import { GROUND_Y, ledgeY } from "./feel.ts";
 
 export const GAME_W = 960;
 export const GAME_H = 540;
