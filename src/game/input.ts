@@ -1,18 +1,17 @@
+import {
+  KEY_BIND,
+  PAD_BIND,
+  emptyTouch,
+  mergeDevice,
+  padPressed,
+  type InputDevice,
+  type TouchState,
+} from "./scheme";
+
 const keys = new Set<string>();
 const injected = new Set<string>();
 
-export const touch = {
-  moveX: 0,
-  moveY: 0,
-  jump: false,
-  attack: false,
-  skill: false,
-  skill2: false,
-  skill3: false,
-  interact: false,
-  down: false,
-  potion: false,
-};
+export const touch: TouchState = emptyTouch();
 
 const prev = {
   jump: false,
@@ -23,7 +22,7 @@ const prev = {
   interact: false,
   inventory: false,
   pause: false,
-  potion: false,
+  use: false,
 };
 
 export type ActionFrame = {
@@ -40,11 +39,39 @@ export type ActionFrame = {
   justInteract: boolean;
   justInventory: boolean;
   justPause: boolean;
-  justPotion: boolean;
+  justUse: boolean;
 };
+
+let device: InputDevice = "touch";
+const deviceListeners = new Set<() => void>();
+
+export function getDevice() {
+  return device;
+}
+
+export function subscribeDevice(fn: () => void) {
+  deviceListeners.add(fn);
+  return () => deviceListeners.delete(fn);
+}
+
+function noteDevice(source: InputDevice, active: boolean) {
+  const next = mergeDevice(device, source, active);
+  if (next === device) return;
+  device = next;
+  if (next !== "touch") resetTouch();
+  deviceListeners.forEach((fn) => fn());
+}
+
+export function resetTouch() {
+  Object.assign(touch, emptyTouch());
+}
 
 function held(code: string) {
   return keys.has(code) || injected.has(code);
+}
+
+function anyHeld(codes: readonly string[]) {
+  return codes.some(held);
 }
 
 function deadzone(v: number, z = 0.22) {
@@ -66,30 +93,30 @@ function sampleGamepad() {
   let down = false;
   let inventory = false;
   let pause = false;
-  let potion = false;
+  let use = false;
+  let live = false;
   for (const pad of pads) {
     if (!pad) continue;
+    live = true;
     const ax = pad.axes;
     moveX += deadzone(ax[0] ?? 0);
     moveY += deadzone(ax[1] ?? 0);
     const b = pad.buttons;
-    const press = (i: number) => Boolean(b[i]?.pressed);
-    // Standard mapping: 0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 8 select, 9 start, 12–15 dpad
-    jump = jump || press(0);
-    attack = attack || press(2) || press(5);
-    skill = skill || press(3);
-    skill2 = skill2 || press(1);
-    skill3 = skill3 || press(4);
-    interact = interact || press(1) && !press(3);
-    down = down || press(13) || (ax[1] ?? 0) > 0.55;
-    inventory = inventory || press(8);
-    pause = pause || press(9);
-    potion = potion || press(6);
-    if (press(14)) moveX -= 1;
-    if (press(15)) moveX += 1;
-    if (press(12)) moveY -= 1;
+    jump = jump || padPressed(b, PAD_BIND.jump);
+    attack = attack || padPressed(b, PAD_BIND.attack);
+    skill = skill || padPressed(b, PAD_BIND.skill);
+    skill2 = skill2 || padPressed(b, PAD_BIND.skill2);
+    interact = interact || padPressed(b, PAD_BIND.interact);
+    down = down || padPressed(b, PAD_BIND.down) || (ax[1] ?? 0) > 0.55;
+    inventory = inventory || padPressed(b, PAD_BIND.inventory);
+    pause = pause || padPressed(b, PAD_BIND.pause);
+    use = use || padPressed(b, PAD_BIND.use);
+    if (padPressed(b, PAD_BIND.dpadLeft)) moveX -= 1;
+    if (padPressed(b, PAD_BIND.dpadRight)) moveX += 1;
+    if (padPressed(b, PAD_BIND.dpadUp)) moveY -= 1;
   }
   return {
+    live,
     moveX: Math.max(-1, Math.min(1, moveX)),
     moveY: Math.max(-1, Math.min(1, moveY)),
     jump,
@@ -101,14 +128,36 @@ function sampleGamepad() {
     down,
     inventory,
     pause,
-    potion,
+    use,
   };
 }
 
 export function sampleActions(): ActionFrame {
   const pad = sampleGamepad();
-  const left = held("KeyA") || held("ArrowLeft") || touch.moveX < -0.3 || pad.moveX < -0.3;
-  const right = held("KeyD") || held("ArrowRight") || touch.moveX > 0.3 || pad.moveX > 0.3;
+  const keyLeft = anyHeld(KEY_BIND.left);
+  const keyRight = anyHeld(KEY_BIND.right);
+  const keyJump = anyHeld(KEY_BIND.jump);
+  const keyDown = anyHeld(KEY_BIND.down);
+  const keyAttack = anyHeld(KEY_BIND.attack);
+  const keySkill = anyHeld(KEY_BIND.skill);
+  const keySkill2 = anyHeld(KEY_BIND.skill2);
+  const keySkill3 = anyHeld(KEY_BIND.skill3);
+  const keyInteract = anyHeld(KEY_BIND.interact);
+  const keyInv = anyHeld(KEY_BIND.inventory);
+  const keyPause = anyHeld(KEY_BIND.pause);
+  const keyUse = anyHeld(KEY_BIND.use);
+  const keyMove = keyLeft || keyRight || keyDown || anyHeld(KEY_BIND.up);
+
+  if (pad.live && (pad.jump || pad.attack || pad.skill || pad.interact || pad.use || Math.abs(pad.moveX) > 0.2)) {
+    noteDevice("gamepad", true);
+  } else if (keyJump || keyAttack || keySkill || keyInteract || keyUse || keyMove || keyPause || keyInv) {
+    noteDevice("keyboard", true);
+  } else if (touch.jump || touch.attack || touch.skill || touch.interact || touch.use || Math.abs(touch.moveX) > 0.2) {
+    noteDevice("touch", true);
+  }
+
+  const left = keyLeft || touch.moveX < -0.3 || pad.moveX < -0.3;
+  const right = keyRight || touch.moveX > 0.3 || pad.moveX > 0.3;
   let moveX = 0;
   if (left) moveX -= 1;
   if (right) moveX += 1;
@@ -117,18 +166,18 @@ export function sampleActions(): ActionFrame {
   }
   moveX = Math.max(-1, Math.min(1, moveX));
 
-  const moveY = Math.max(-1, Math.min(1, touch.moveY + pad.moveY + (held("KeyW") || held("ArrowUp") ? -1 : 0)));
+  const moveY = Math.max(-1, Math.min(1, touch.moveY + pad.moveY + (anyHeld(KEY_BIND.up) ? -1 : 0)));
 
-  const jumpHeld = held("Space") || held("KeyW") || held("ArrowUp") || touch.jump || pad.jump;
-  const downHeld = held("KeyS") || held("ArrowDown") || touch.down || pad.down;
-  const attackHeld = held("KeyJ") || held("KeyZ") || touch.attack || pad.attack;
-  const skillHeld = held("KeyK") || held("KeyX") || touch.skill || pad.skill;
-  const skill2Held = held("KeyL") || held("KeyC") || touch.skill2 || pad.skill2;
-  const skill3Held = held("KeyU") || held("KeyV") || touch.skill3 || pad.skill3;
-  const interactHeld = held("KeyE") || touch.interact || pad.interact;
-  const invHeld = held("KeyI") || held("Tab") || pad.inventory;
-  const pauseHeld = held("Escape") || held("KeyP") || pad.pause;
-  const potionHeld = held("KeyH") || held("Digit1") || touch.potion || pad.potion;
+  const jumpHeld = keyJump || touch.jump || pad.jump;
+  const downHeld = keyDown || touch.down || pad.down;
+  const attackHeld = keyAttack || touch.attack || pad.attack;
+  const skillHeld = keySkill || touch.skill || pad.skill;
+  const skill2Held = keySkill2 || touch.skill2 || pad.skill2;
+  const skill3Held = keySkill3 || touch.skill3 || pad.skill3;
+  const interactHeld = keyInteract || touch.interact || pad.interact;
+  const invHeld = keyInv || pad.inventory;
+  const pauseHeld = keyPause || pad.pause;
+  const useHeld = keyUse || touch.use || pad.use;
 
   const frame: ActionFrame = {
     moveX,
@@ -144,7 +193,7 @@ export function sampleActions(): ActionFrame {
     justInteract: interactHeld && !prev.interact,
     justInventory: invHeld && !prev.inventory,
     justPause: pauseHeld && !prev.pause,
-    justPotion: potionHeld && !prev.potion,
+    justUse: useHeld && !prev.use,
   };
 
   prev.jump = jumpHeld;
@@ -155,7 +204,7 @@ export function sampleActions(): ActionFrame {
   prev.interact = interactHeld;
   prev.inventory = invHeld;
   prev.pause = pauseHeld;
-  prev.potion = potionHeld;
+  prev.use = useHeld;
   return frame;
 }
 
@@ -164,35 +213,12 @@ export function setKeys(codes: string[]) {
   for (const c of codes) injected.add(c);
 }
 
-const GAME_CODES = new Set([
-  "Space",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowUp",
-  "ArrowDown",
-  "KeyA",
-  "KeyD",
-  "KeyW",
-  "KeyS",
-  "KeyJ",
-  "KeyK",
-  "KeyL",
-  "KeyU",
-  "KeyZ",
-  "KeyX",
-  "KeyC",
-  "KeyV",
-  "KeyE",
-  "KeyI",
-  "KeyP",
-  "KeyH",
-  "Digit1",
-  "Tab",
-]);
+const GAME_CODES = new Set<string>(Object.values(KEY_BIND).flat());
 
 function onDown(e: KeyboardEvent) {
   if (GAME_CODES.has(e.code)) e.preventDefault();
   keys.add(e.code);
+  noteDevice("keyboard", GAME_CODES.has(e.code));
 }
 
 function onUp(e: KeyboardEvent) {
@@ -209,6 +235,14 @@ export function bindWindow() {
   window.addEventListener("blur", onBlur);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) keys.clear();
+  });
+  window.addEventListener("gamepadconnected", () => noteDevice("gamepad", true));
+  window.addEventListener("gamepaddisconnected", () => {
+    const still = typeof navigator !== "undefined" && navigator.getGamepads?.().some(Boolean);
+    if (!still) {
+      const coarse = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      noteDevice(coarse ? "touch" : "keyboard", true);
+    }
   });
   return () => {
     window.removeEventListener("keydown", onDown);
