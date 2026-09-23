@@ -54,7 +54,6 @@ export function planTouch(opts: {
   };
 }
 
-/** Orb/arrow data used reach 0, which never connected. Give them a lane. */
 export function strikeReach(strike: Strike) {
   if (strike.reach > 0) return strike.reach;
   if (strike.shape === "orb") return 260;
@@ -75,4 +74,23 @@ export function inStrikeLane(opts: {
   const half = opts.hitW * 0.5;
   const toward = (opts.mobX - opts.playerX) * opts.facing;
   return toward + half > -48 && toward - half < opts.reach + 16;
+}
+
+export type BoltSpec = {
+  key: "orb" | "arrow";
+  shots: number;
+  speed: number;
+  life: number;
+  spread: number;
+};
+
+export function boltSpec(strike: Strike): BoltSpec | null {
+  if (strike.shape !== "orb" && strike.shape !== "arrow") return null;
+  return {
+    key: strike.shape,
+    shots: Math.max(1, strike.shots),
+    speed: strike.shape === "arrow" ? 560 : 420,
+    life: 0.85,
+    spread: strike.shots > 1 ? 18 : 0,
+  };
 }
