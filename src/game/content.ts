@@ -38,9 +38,9 @@ export type JobDef = {
 export const JOBS: Record<JobId, JobDef> = {
   guardian: {
     id: "guardian",
-    name: "Guardian",
-    title: "Oak-sworn vanguard",
-    blurb: "Close steel. High health. A spinning leaf-cleave when you need space.",
+    name: "Fighter",
+    title: "Melee",
+    blurb: "Hits nearby things. Has more HP. Skill is a wider swing.",
     color: "#6b8f71",
     hp: 128,
     mp: 36,
@@ -50,16 +50,16 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.32,
     skillCd: 5.2,
     skillCost: 14,
-    skillName: "Oakspin",
-    attackName: "Sprout Slash",
+    skillName: "Spin",
+    attackName: "Slash",
     attack: { shape: "melee", reach: 70, pierce: 3, falloff: 0, shots: 1 },
     skill: { shape: "melee", reach: 108, pierce: 6, falloff: 0, shots: 1 },
   },
   weaver: {
     id: "weaver",
-    name: "Weaver",
-    title: "Dewlight channeler",
-    blurb: "Long-range orbs. Fragile, sharp. Cascade splits three shots across a lane.",
+    name: "Mage",
+    title: "Ranged magic",
+    blurb: "Shoots orbs. Has more MP. Skill fires three.",
     color: "#5b8ea8",
     hp: 84,
     mp: 92,
@@ -69,16 +69,16 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.42,
     skillCd: 4.6,
     skillCost: 18,
-    skillName: "Cascade",
-    attackName: "Dewbolt",
+    skillName: "Spread",
+    attackName: "Orb",
     attack: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 1 },
     skill: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 3 },
   },
   ranger: {
     id: "ranger",
-    name: "Ranger",
-    title: "Canopy hunter",
-    blurb: "Needles from mid-range. Fast on the ground. Fan Volley covers a cone.",
+    name: "Archer",
+    title: "Ranged physical",
+    blurb: "Shoots arrows. Walks a bit faster. Skill is a cone.",
     color: "#b56a48",
     hp: 96,
     mp: 54,
@@ -88,8 +88,8 @@ export const JOBS: Record<JobId, JobDef> = {
     attackCd: 0.36,
     skillCd: 4.8,
     skillCost: 16,
-    skillName: "Fan Volley",
-    attackName: "Needleshot",
+    skillName: "Volley",
+    attackName: "Shot",
     attack: { shape: "arrow", reach: 0, pierce: 1, falloff: 0, shots: 1 },
     skill: { shape: "arrow", reach: 0, pierce: 2, falloff: 0.2, shots: 3 },
   },
@@ -147,7 +147,7 @@ export { GROUND_Y, ledgeY };
 export const MAPS: Record<MapId, MapDef> = {
   haven: {
     id: "haven",
-    name: "Glimmergrove",
+    name: "Town",
     width: 2400,
     sky: "haven-sky",
     spawn: { x: 220, y: 360 },
@@ -159,15 +159,15 @@ export const MAPS: Record<MapId, MapDef> = {
     ],
     gaps: [],
     portals: [
-      { x: 380, y: GROUND_Y, to: "stinglane", label: "Stinglane" },
-      { x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" },
+      { x: 380, y: GROUND_Y, to: "stinglane", label: "Alley" },
+      { x: 2080, y: GROUND_Y, to: "dewpath", label: "Field" },
     ],
     npc: { x: 620, y: GROUND_Y },
     monsters: [],
   },
   dewpath: {
     id: "dewpath",
-    name: "Dewpath",
+    name: "Field",
     width: 3400,
     sky: "dewpath-sky",
     spawn: { x: 280, y: 360 },
@@ -182,8 +182,8 @@ export const MAPS: Record<MapId, MapDef> = {
     ],
     gaps: [{ x: 920, w: 168 }],
     portals: [
-      { x: 80, y: GROUND_Y, to: "haven", label: "Grove" },
-      { x: 3120, y: GROUND_Y, to: "heartwood", label: "Heartwood", requireKills: 8 },
+      { x: 80, y: GROUND_Y, to: "haven", label: "Town" },
+      { x: 3120, y: GROUND_Y, to: "heartwood", label: "Boss Room", requireKills: 8 },
     ],
     monsters: [
       { x: 520, y: GROUND_Y, kind: "dewslug" },
@@ -198,7 +198,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   stinglane: {
     id: "stinglane",
-    name: "Stinglane",
+    name: "Alley",
     width: 1680,
     sky: "heartwood-sky",
     spawn: { x: 180, y: 360 },
@@ -209,7 +209,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(1240, 1, 140),
     ],
     gaps: [],
-    portals: [{ x: 80, y: GROUND_Y, to: "haven", label: "Grove" }],
+    portals: [{ x: 80, y: GROUND_Y, to: "haven", label: "Town" }],
     monsters: [
       { x: 360, y: GROUND_Y, kind: "nettle" },
       { x: 520, y: GROUND_Y, kind: "nettle" },
@@ -222,7 +222,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   heartwood: {
     id: "heartwood",
-    name: "Heartwood",
+    name: "Boss Room",
     width: 2000,
     sky: "heartwood-sky",
     spawn: { x: 280, y: 360 },
@@ -233,7 +233,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(1560, 1, 180),
     ],
     gaps: [],
-    portals: [{ x: 80, y: GROUND_Y, to: "dewpath", label: "Dewpath" }],
+    portals: [{ x: 80, y: GROUND_Y, to: "dewpath", label: "Field" }],
     monsters: [{ x: 1180, y: GROUND_Y, kind: "warden" }],
   },
 };
@@ -247,13 +247,13 @@ export type ItemDef = {
 };
 
 const DROP_POOL: ItemDef[] = [
-  { id: "sprout-blade", name: "Sprout Blade", slot: "weapon", atk: 4, def: 0 },
-  { id: "reed-bow", name: "Reed Bow", slot: "weapon", atk: 5, def: 0 },
-  { id: "dew-rod", name: "Dew Rod", slot: "weapon", atk: 6, def: 0 },
-  { id: "moss-vest", name: "Moss Vest", slot: "armor", atk: 0, def: 3 },
-  { id: "bark-mail", name: "Bark Mail", slot: "armor", atk: 0, def: 5 },
-  { id: "seed-charm", name: "Seed Charm", slot: "acc", atk: 2, def: 1 },
-  { id: "amber-pin", name: "Amber Pin", slot: "acc", atk: 3, def: 0 },
+  { id: "iron-sword", name: "Iron Sword", slot: "weapon", atk: 4, def: 0 },
+  { id: "wood-bow", name: "Wood Bow", slot: "weapon", atk: 5, def: 0 },
+  { id: "stick", name: "Stick", slot: "weapon", atk: 6, def: 0 },
+  { id: "cloth-vest", name: "Cloth Vest", slot: "armor", atk: 0, def: 3 },
+  { id: "iron-mail", name: "Iron Mail", slot: "armor", atk: 0, def: 5 },
+  { id: "ring", name: "Ring", slot: "acc", atk: 2, def: 1 },
+  { id: "charm", name: "Charm", slot: "acc", atk: 3, def: 0 },
 ];
 
 export function rollDrop(isBoss: boolean): ItemDef | null {
