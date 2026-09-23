@@ -25,15 +25,15 @@ export function shouldSpawn(
 
 export function skinFor(kind: string): string {
   if (kind === "bloom") return "dewslug";
-  if (kind === "stump") return "capling";
-  if (kind === "bramble") return "warden";
+  if (kind === "stump" || kind === "nettle") return "capling";
+  if (kind === "bramble" || kind === "gorecap") return "warden";
   return kind;
 }
 
 export function pileAmount(kind: string): number {
   if (kind === "bloom") return 3;
-  if (kind === "stump") return 2;
-  if (kind === "bramble") return 2;
+  if (kind === "stump" || kind === "gorecap") return 2;
+  if (kind === "bramble" || kind === "nettle") return 2;
   return 1;
 }
 

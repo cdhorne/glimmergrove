@@ -44,8 +44,8 @@ export function addToBag(bag: Bag, pile: Pile, n: number): Bag {
 }
 
 export function pileOf(kind: string): Pile | null {
-  if (kind === "dewslug" || kind === "capling" || kind === "bloom") return "feed";
-  if (kind === "stump" || kind === "bramble") return "bulk";
+  if (kind === "dewslug" || kind === "capling" || kind === "bloom" || kind === "nettle") return "feed";
+  if (kind === "stump" || kind === "bramble" || kind === "gorecap") return "bulk";
   return null;
 }
 

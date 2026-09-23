@@ -1,7 +1,7 @@
 /** Mob wander + stun. Scene owns sprites; this decides whether AI may write vx. */
 
 export function mobAggroReach(kind: string) {
-  return kind === "warden" || kind === "bramble" ? 420 : 180;
+  return kind === "warden" || kind === "bramble" || kind === "gorecap" ? 420 : kind === "nettle" ? 260 : 180;
 }
 
 export type MobIntent = {

@@ -4,7 +4,7 @@ export const GAME_W = 960;
 export const GAME_H = 540;
 
 export type JobId = "guardian" | "weaver" | "ranger";
-export type MapId = "haven" | "dewpath" | "heartwood";
+export type MapId = "haven" | "dewpath" | "heartwood" | "stinglane";
 export type ItemSlot = "weapon" | "armor" | "acc";
 
 export type Strike = {
@@ -115,7 +115,7 @@ export type PortalDef = {
 export type MonsterSpawn = {
   x: number;
   y: number;
-  kind: "dewslug" | "capling" | "warden";
+  kind: "dewslug" | "capling" | "warden" | "nettle" | "gorecap";
 };
 
 export type MapDef = {
@@ -158,7 +158,10 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(1500, 1, 260),
     ],
     pits: [],
-    portals: [{ x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" }],
+    portals: [
+      { x: 380, y: GROUND_Y, to: "stinglane", label: "Stinglane" },
+      { x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" },
+    ],
     npc: { x: 620, y: GROUND_Y },
     monsters: [],
   },
@@ -191,6 +194,30 @@ export const MAPS: Record<MapId, MapDef> = {
       { x: 2320, y: GROUND_Y, kind: "dewslug" },
       { x: 2640, y: ledgeY(1), kind: "capling" },
       { x: 2880, y: GROUND_Y, kind: "capling" },
+    ],
+  },
+  stinglane: {
+    id: "stinglane",
+    name: "Stinglane",
+    width: 1680,
+    sky: "heartwood-sky",
+    spawn: { x: 180, y: 360 },
+    platforms: [
+      ground(1680),
+      wood(420, 1, 160),
+      wood(880, 1, 180),
+      wood(1240, 1, 140),
+    ],
+    pits: [],
+    portals: [{ x: 80, y: GROUND_Y, to: "haven", label: "Grove" }],
+    monsters: [
+      { x: 360, y: GROUND_Y, kind: "nettle" },
+      { x: 520, y: GROUND_Y, kind: "nettle" },
+      { x: 700, y: GROUND_Y, kind: "gorecap" },
+      { x: 900, y: ledgeY(1), kind: "nettle" },
+      { x: 1080, y: GROUND_Y, kind: "nettle" },
+      { x: 1280, y: GROUND_Y, kind: "gorecap" },
+      { x: 1460, y: GROUND_Y, kind: "nettle" },
     ],
   },
   heartwood: {
@@ -241,7 +268,7 @@ export function expToNext(level: number) {
   return Math.round(36 + level * 28);
 }
 
-export type MonsterKind = "dewslug" | "capling" | "warden";
+export type MonsterKind = "dewslug" | "capling" | "warden" | "nettle" | "gorecap";
 
 export const MONSTERS: Record<
   MonsterKind,
@@ -305,5 +332,35 @@ export const MONSTERS: Record<
     knockback: 0.35,
     mass: 3.1,
     blockPierce: true,
+  },
+  nettle: {
+    hp: 22,
+    atk: 34,
+    exp: 10,
+    glims: 3,
+    speed: 92,
+    display: 64,
+    bodyW: 26,
+    bodyH: 34,
+    hitW: 40,
+    hitH: 48,
+    knockback: 1.15,
+    mass: 0.7,
+    blockPierce: false,
+  },
+  gorecap: {
+    hp: 86,
+    atk: 26,
+    exp: 28,
+    glims: 12,
+    speed: 48,
+    display: 96,
+    bodyW: 44,
+    bodyH: 52,
+    hitW: 60,
+    hitH: 68,
+    knockback: 0.55,
+    mass: 1.9,
+    blockPierce: false,
   },
 };
