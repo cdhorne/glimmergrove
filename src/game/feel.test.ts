@@ -12,6 +12,7 @@ import {
   jumpPeakPx,
   ledgePx,
   ledgeY,
+  landsOn,
   GROUND_Y,
   steerFor,
   visualBox,
@@ -36,6 +37,14 @@ test("one ledge is inside a single hop", () => {
   assert.ok(step * 2 > hop, "two steps need a mid ledge");
   assert.equal(ledgeY(0), GROUND_Y);
   assert.equal(ledgeY(1), GROUND_Y - step);
+});
+
+test("floors always collide; one-ways only when falling onto the top", () => {
+  assert.equal(landsOn(false, false, 0, 400, 350), true);
+  assert.equal(landsOn(true, true, 80, 350, 350), false);
+  assert.equal(landsOn(true, false, -40, 350, 350), false);
+  assert.equal(landsOn(true, false, 80, 400, 350), false);
+  assert.equal(landsOn(true, false, 80, 350, 350), true);
 });
 
 test("air steer is at least as strong as ground so jump+attack can still turn", () => {

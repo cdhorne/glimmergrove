@@ -21,8 +21,10 @@ export const STICK_R = 56;
 
 /** Floor top. Ledges are this minus n × ledgePx(). */
 export const GROUND_Y = 468;
-/** Fraction of hop used as one comfortable step. */
-export const LEDGE_RATIO = 0.62;
+/** Comfortable single hop. Still under jumpPeakPx so the board is landable. */
+export const LEDGE_RATIO = 0.82;
+/** Feet may sit this many px into a one-way top and still count as landing. */
+export const LEDGE_SLOP = 10;
 
 export const CHROME = {
   landscapeStickW: 0.32,
@@ -42,6 +44,20 @@ export function ledgePx() {
 
 export function ledgeY(steps: number, groundY = GROUND_Y) {
   return groundY - steps * ledgePx();
+}
+
+/** Solid floor always. One-ways only when falling onto the top, not walking into the side. */
+export function landsOn(
+  oneWay: boolean,
+  skip: boolean,
+  vy: number,
+  feetY: number,
+  platTop: number,
+  slop = LEDGE_SLOP,
+) {
+  if (!oneWay) return true;
+  if (skip) return false;
+  return vy >= 0 && feetY <= platTop + slop;
 }
 
 export function gravityForVy(vy: number) {
