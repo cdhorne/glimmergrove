@@ -1,14 +1,11 @@
-/**
- * Pile rules. Pure. Call only from world/install.ts (scene) and yard-panel (React).
- * Do not call from combat, input, or feel.
- */
+/** Harvest rules. Pure. Scene and yard call these; combat/input/feel do not. */
 import {
   addToBag,
   BAG_CAP,
   bagTotal,
-  pileOf,
+  yieldOf,
   type EconomyState,
-  type Pile,
+  type Yield,
 } from "../economy.ts";
 
 export type SpawnSlot = { kind: string; when?: "bloom" };
@@ -30,34 +27,34 @@ export function skinFor(kind: string): string {
   return kind;
 }
 
-export function pileAmount(kind: string): number {
+export function harvestAmount(kind: string): number {
   if (kind === "bloom") return 3;
   if (kind === "stump" || kind === "gorecap") return 2;
   if (kind === "bramble" || kind === "nettle") return 2;
   return 1;
 }
 
-export function grantPile(
+export function grantHarvest(
   eco: EconomyState,
-  pile: Pile,
+  kind: Yield,
   n: number,
 ): { eco: EconomyState; prompt: string } {
-  const next = addToBag(eco.bag, pile, n);
-  const gained = next[pile] - eco.bag[pile];
+  const next = addToBag(eco.bag, kind, n);
+  const gained = next[kind] - eco.bag[kind];
   eco.bag = next;
   if (gained < n) {
-    if (pile === "feed") eco.lostThisRun.pitFeed += n - gained;
+    if (kind === "feed") eco.lostThisRun.gapFeed += n - gained;
     return { eco, prompt: "Bag full — drip" };
   }
-  return { eco, prompt: `Bag +${gained} ${pile}  (${bagTotal(eco.bag)}/${BAG_CAP})` };
+  return { eco, prompt: `Bag +${gained} ${kind}  (${bagTotal(eco.bag)}/${BAG_CAP})` };
 }
 
-export function dumpKind(eco: EconomyState, kind: string): EconomyState {
-  if (pileOf(kind) === "feed") eco.lostThisRun.pitFeed += 1;
+export function loseToGap(eco: EconomyState, kind: string): EconomyState {
+  if (yieldOf(kind) === "feed") eco.lostThisRun.gapFeed += 1;
   return eco;
 }
 
-export function hudEconomy(eco: EconomyState | undefined) {
+export function hudHarvest(eco: EconomyState | undefined) {
   return {
     bagFeed: eco?.bag.feed ?? 0,
     bagBulk: eco?.bag.bulk ?? 0,

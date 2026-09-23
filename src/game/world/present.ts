@@ -1,6 +1,7 @@
 import { JOBS, MAPS, expToNext, type JobId, type MapId } from "../content";
 import { gameBus } from "../bus";
 import { canShowUse } from "./rules";
+import { hudHarvest } from "./harvest";
 import type { SaveData } from "../save";
 
 export function hudSnap(opts: {
@@ -37,10 +38,7 @@ export function hudSnap(opts: {
     skillCost: job.skillCost,
     dead: opts.dead,
     paused: opts.paused,
-    bagFeed: 0,
-    bagBulk: 0,
-    waterOk: true,
-    bloom: 0,
+    ...hudHarvest(opts.save.economy),
   };
 }
 

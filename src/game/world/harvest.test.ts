@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { defaultEconomy } from "../economy.ts";
-import { dumpKind, grantPile, shouldSpawn, skinFor } from "./piles.ts";
+import { loseToGap, grantHarvest, shouldSpawn, skinFor } from "./harvest.ts";
 
 test("bloom slots stay off until the flag is on", () => {
   const slot = { kind: "bloom", when: "bloom" as const };
@@ -11,21 +11,21 @@ test("bloom slots stay off until the flag is on", () => {
   assert.equal(shouldSpawn({ kind: "warden" }, { bloom: 0 }, true), false);
 });
 
-test("grantPile caps and pit-drips overflow Feed", () => {
+test("grantHarvest caps and drips overflow Feed into the gap ledger", () => {
   const eco = defaultEconomy();
-  const once = grantPile(eco, "feed", 12);
+  const once = grantHarvest(eco, "feed", 12);
   assert.equal(once.eco.bag.feed, 12);
-  const drip = grantPile(eco, "feed", 2);
+  const drip = grantHarvest(eco, "feed", 2);
   assert.match(drip.prompt, /drip/);
-  assert.equal(eco.lostThisRun.pitFeed, 2);
+  assert.equal(eco.lostThisRun.gapFeed, 2);
 });
 
-test("skin and dump stay kind-keyed", () => {
+test("skin and gap loss stay kind-keyed", () => {
   assert.equal(skinFor("bloom"), "dewslug");
   assert.equal(skinFor("stump"), "capling");
   const eco = defaultEconomy();
-  dumpKind(eco, "dewslug");
-  assert.equal(eco.lostThisRun.pitFeed, 1);
-  dumpKind(eco, "warden");
-  assert.equal(eco.lostThisRun.pitFeed, 1);
+  loseToGap(eco, "dewslug");
+  assert.equal(eco.lostThisRun.gapFeed, 1);
+  loseToGap(eco, "warden");
+  assert.equal(eco.lostThisRun.gapFeed, 1);
 });

@@ -18,10 +18,11 @@ import { loadSave, writeSave, defaultSave, type SaveData } from "../save";
 import { applyPlayerMotion } from "../motion";
 import { GRAVITY_DOWN, MAX_FALL, landsOn } from "../feel";
 import { stepMob } from "../mobs";
+import { defaultEconomy, yieldOf } from "../economy";
 import { applyUse } from "../world/rules";
-import { pitDeath, tickTravel } from "../world/travel";
+import { gapDeath, inGap, tickTravel } from "../world/travel";
 import { emitWorldHud } from "../world/present";
-import { skinFor } from "../world/piles";
+import { grantHarvest, harvestAmount, loseToGap, shouldSpawn, skinFor } from "../world/harvest";
 import { planHurt, planTouch } from "../world/combat-run";
 
 type Mob = Phaser.Physics.Arcade.Sprite & {
@@ -106,6 +107,7 @@ export class WorldScene extends Phaser.Scene {
       this.save.mp = job.mp;
     } else if (this.save.hp <= 0) this.save.hp = job.hp;
     this.save.map = this.mapId;
+    if (!this.save.economy) this.save.economy = defaultEconomy();
 
     this.physics.world.setBounds(0, 0, map.width, GAME_H + 80);
     this.cameras.main.setBounds(0, 0, map.width, GAME_H);
@@ -195,7 +197,7 @@ export class WorldScene extends Phaser.Scene {
       spr.setOrigin(0.5, 1).setDepth(6);
     }
     for (const s of map.monsters) {
-      if (s.kind === "warden" && this.save.wardenDown) continue;
+      if (!shouldSpawn(s, this.save.economy.flags, this.save.wardenDown)) continue;
       this.spawnMob(s.kind, s.x, s.y);
     }
   }
@@ -223,7 +225,11 @@ export class WorldScene extends Phaser.Scene {
     mb.setOffset((sprite.width - def.hitW / sx) * 0.5, sprite.height - def.hitH / sy);
     mb.setAllowGravity(true);
     sprite.setCollideWorldBounds(true).setMaxVelocity(def.speed, 900).setGravityY(1800);
-    this.physics.add.collider(sprite, this.solids);
+    this.physics.add.collider(sprite, this.solids, undefined, (_m, plat) => {
+      const body = sprite.body as Phaser.Physics.Arcade.Body;
+      const platBody = (plat as Phaser.GameObjects.TileSprite).body as Phaser.Physics.Arcade.StaticBody;
+      return landsOn(Boolean((plat as Phaser.GameObjects.GameObject).getData("oneWay")), false, body.velocity.y, body.bottom, platBody.top);
+    });
     this.physics.add.overlap(this.player, sprite, () => this.touchMob(sprite));
     if (this.anims.exists(`${visual}-idle`)) sprite.play(`${visual}-idle`);
     this.mobs.push(sprite);
@@ -253,7 +259,7 @@ export class WorldScene extends Phaser.Scene {
     this.updatePlayer(dt, actions, _t);
     this.updateMobs(dt);
     this.updateInteract(dt, actions);
-    this.checkPits();
+    this.checkGaps();
     this.emitHudThrottled(dt);
   }
 
@@ -338,6 +344,14 @@ export class WorldScene extends Phaser.Scene {
   killMob(mob: Mob) {
     const def = MONSTERS[mob.kind];
     const isBoss = mob.kind === "warden";
+    const yieldKind = yieldOf(mob.kind);
+    if (yieldKind && this.save.economy) {
+      const { prompt } = grantHarvest(this.save.economy, yieldKind, harvestAmount(mob.kind));
+      this.prompt = prompt;
+      this.time.delayedCall(1400, () => {
+        if (this.prompt?.startsWith("Bag")) this.prompt = null;
+      });
+    }
     this.save.exp += def.exp;
     this.save.kills += 1;
     if (this.save.kills >= 8) this.save.heartwoodOpen = true;
@@ -382,11 +396,6 @@ export class WorldScene extends Phaser.Scene {
     for (const mob of this.mobs) {
       if (!mob.active) continue;
       const body = mob.body as Phaser.Physics.Arcade.Body;
-      if (mob.y > GAME_H + 20) {
-        mob.setPosition(mob.originX, mob.originY - 4);
-        body.setVelocity(0, 0);
-        continue;
-      }
       const intent = stepMob({
         dt,
         hurtT: mob.hurtT,
@@ -436,6 +445,7 @@ export class WorldScene extends Phaser.Scene {
     this.prompt = "Rested. HP and dew restored.";
     sfxPlay.pickup();
     this.persist();
+    gameBus.emit("open-yard");
   }
 
   enterMap(to: MapId, force = false) {
@@ -457,9 +467,30 @@ export class WorldScene extends Phaser.Scene {
     this.scene.restart({ job: this.jobId, mapId: to });
   }
 
-  checkPits() {
+  checkGaps() {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    if (pitDeath(this.mapId, this.player.x, this.player.y, body.y, GAME_H)) this.die();
+    if (gapDeath(this.mapId, this.player.x, this.player.y, body.y, GAME_H)) this.die();
+    for (const mob of [...this.mobs]) {
+      if (!mob.active) continue;
+      const mb = mob.body as Phaser.Physics.Arcade.Body;
+      if (!inGap(this.mapId, mob.x, mob.y, mb.y, GAME_H, 20)) continue;
+      loseToGap(this.save.economy, mob.kind);
+      const ox = mob.originX;
+      const oy = mob.originY;
+      const kind = mob.kind;
+      mob.destroy();
+      this.mobs = this.mobs.filter((m) => m !== mob);
+      this.prompt = "Lost to the gap";
+      this.time.delayedCall(1200, () => {
+        if (this.prompt === "Lost to the gap") this.prompt = null;
+      });
+      if (kind !== "warden") {
+        this.time.delayedCall(8000, () => {
+          if (!this.changingMap && !this.dead) this.spawnMob(kind, ox, oy);
+        });
+      }
+      this.persist();
+    }
   }
 
   die() {

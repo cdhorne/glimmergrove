@@ -58,8 +58,12 @@ export function tickTravel(s: TravelState, dt: number, a: ActionFrame): TravelTi
   return { prompt, interact, portalDwell, enter, rest };
 }
 
-export function pitDeath(mapId: MapId, x: number, y: number, bodyY: number, gameH: number) {
-  if (y > gameH + 40) return true;
+export function inGap(mapId: MapId, x: number, y: number, bodyY: number, gameH: number, fallBelow = 40) {
+  if (y > gameH + fallBelow) return true;
   const map = MAPS[mapId];
-  return map.pits.some((pit) => x > pit.x && x < pit.x + pit.w && bodyY > 500);
+  return map.gaps.some((gap) => x > gap.x && x < gap.x + gap.w && bodyY > 500);
+}
+
+export function gapDeath(mapId: MapId, x: number, y: number, bodyY: number, gameH: number) {
+  return inGap(mapId, x, y, bodyY, gameH, 40);
 }

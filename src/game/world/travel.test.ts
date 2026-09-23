@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pitDeath, tickTravel } from "./travel.ts";
+import { gapDeath, tickTravel } from "./travel.ts";
 
 const idle = {
   moveX: 0,
@@ -55,8 +55,8 @@ test("heartwood stays locked until kills or flag", () => {
   assert.equal(locked.enter, undefined);
 });
 
-test("pit and fall are deaths; floor is not", () => {
-  assert.equal(pitDeath("haven", 200, 200, 200, 540), false);
-  assert.equal(pitDeath("haven", 200, 600, 200, 540), true);
-  assert.equal(pitDeath("dewpath", 980, 400, 510, 540), true);
+test("gap and fall are deaths; floor is not", () => {
+  assert.equal(gapDeath("haven", 200, 200, 200, 540), false);
+  assert.equal(gapDeath("haven", 200, 600, 200, 540), true);
+  assert.equal(gapDeath("dewpath", 980, 400, 510, 540), true);
 });

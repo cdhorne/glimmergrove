@@ -5,17 +5,17 @@ import {
   BAG_CAP,
   defaultEconomy,
   depositBag,
-  pileOf,
+  yieldOf,
   runDigester,
   tickSeason,
   build,
 } from "./economy.ts";
 
-test("bag caps and names piles from kinds", () => {
-  assert.equal(pileOf("dewslug"), "feed");
-  assert.equal(pileOf("stump"), "bulk");
-  assert.equal(pileOf("warden"), null);
-  let bag = addToBag(defaultEconomy().bag, "feed", 20);
+test("bag caps and names yields from kinds", () => {
+  assert.equal(yieldOf("dewslug"), "feed");
+  assert.equal(yieldOf("stump"), "bulk");
+  assert.equal(yieldOf("warden"), null);
+  const bag = addToBag(defaultEconomy().bag, "feed", 20);
   assert.equal(bag.feed, BAG_CAP);
 });
 
@@ -36,13 +36,13 @@ test("deposit then digester clears bloom fuel", () => {
   assert.equal(eco.flags.bloom, 1);
 });
 
-test("cover forgives pit loss for water", () => {
+test("cover forgives gap loss for water", () => {
   let eco = defaultEconomy();
-  eco = { ...eco, lostThisRun: { pitFeed: 4 } };
+  eco = { ...eco, lostThisRun: { gapFeed: 4 } };
   eco = tickSeason(eco);
   assert.equal(eco.waterOk, false);
   eco = build(eco, "cover");
-  eco = { ...eco, lostThisRun: { pitFeed: 4 } };
+  eco = { ...eco, lostThisRun: { gapFeed: 4 } };
   eco = tickSeason(eco);
   assert.equal(eco.waterOk, true);
 });
