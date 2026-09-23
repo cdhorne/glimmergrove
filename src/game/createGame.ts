@@ -4,6 +4,7 @@ import { BootScene } from "./scenes/BootScene";
 import { WorldScene } from "./scenes/WorldScene";
 import { installMotion } from "./motion";
 import { installCombat } from "./installCombat";
+import { installSolids } from "./installSolids";
 import { registerKinds } from "./world/kinds";
 import { installPiles } from "./world/install";
 
@@ -11,6 +12,7 @@ registerKinds();
 installMotion(WorldScene);
 installCombat(WorldScene);
 installPiles(WorldScene);
+installSolids(WorldScene);
 
 export type CreateOpts = {
   parent: HTMLElement;
