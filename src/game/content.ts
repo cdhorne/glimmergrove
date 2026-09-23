@@ -125,7 +125,7 @@ export type MapDef = {
   sky: string;
   spawn: { x: number; y: number };
   platforms: PlatformDef[];
-  pits: { x: number; w: number }[];
+  gaps: { x: number; w: number }[];
   portals: PortalDef[];
   npc?: { x: number; y: number };
   monsters: MonsterSpawn[];
@@ -157,7 +157,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(980, 1, 180),
       wood(1500, 1, 260),
     ],
-    pits: [],
+    gaps: [],
     portals: [
       { x: 380, y: GROUND_Y, to: "stinglane", label: "Stinglane" },
       { x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" },
@@ -180,7 +180,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(2100, 1, 200),
       wood(2580, 1, 280),
     ],
-    pits: [{ x: 920, w: 168 }],
+    gaps: [{ x: 920, w: 168 }],
     portals: [
       { x: 80, y: GROUND_Y, to: "haven", label: "Grove" },
       { x: 3120, y: GROUND_Y, to: "heartwood", label: "Heartwood", requireKills: 8 },
@@ -208,7 +208,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(880, 1, 180),
       wood(1240, 1, 140),
     ],
-    pits: [],
+    gaps: [],
     portals: [{ x: 80, y: GROUND_Y, to: "haven", label: "Grove" }],
     monsters: [
       { x: 360, y: GROUND_Y, kind: "nettle" },
@@ -232,7 +232,7 @@ export const MAPS: Record<MapId, MapDef> = {
       wood(1180, 1, 220),
       wood(1560, 1, 180),
     ],
-    pits: [],
+    gaps: [],
     portals: [{ x: 80, y: GROUND_Y, to: "dewpath", label: "Dewpath" }],
     monsters: [{ x: 1180, y: GROUND_Y, kind: "warden" }],
   },
