@@ -1,5 +1,5 @@
 /**
- * Extra kinds and Dewpath slots. Call once from createGame (registerKinds).
+ * Extra kinds and Field slots. Call once from createGame (registerKinds).
  * Do not import from combat. Mutates MAPS/MONSTERS at boot.
  */
 import { MAPS, MONSTERS, GROUND_Y, ledgeY } from "../content";
