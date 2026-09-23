@@ -21,7 +21,7 @@ Wasp, Brute, Boss. Flavour is a later pass, not a load-bearing layer.
 | `src/game/skin.ts` | Kind → texture / scale / tint. Asset filenames stay put |
 | `src/game/feel.ts` `motion.ts` `combat.ts` `mobs.ts` | Phaser-free rules + thin adapters |
 | `src/game/scenes/WorldScene.ts` | Phaser adapter: apply plans, draw sprites |
-| `src/game/world/` | Travel, piles, HUD present, extra kinds |
+| `src/game/world/` | Travel, harvest, HUD present, extra kinds |
 | `src/game/save.ts` | Device-local save (`glimmergrove-save-v1`) |
 | `public/game/` | Sheets and skies. Do not rename to match labels |
 
@@ -44,10 +44,9 @@ npm run dev
 - New game rules are **pure functions over data**. The scene applies the
   result. Do not grow `WorldScene` with another `this.foo =` field if the
   value can live in a plan object.
-- Do not add a new `installX(WorldScene)` prototype wrap. `installPiles`
-  and `installSolids` are legacy seams; fold work into called functions.
+- Do not add an `installX(WorldScene)` prototype wrap. Call a function.
 - Phaser imports stay in `scenes/`, `createGame.ts`, and existing adapters
-  (`motion.ts`, `install*.ts`). Rules modules stay Phaser-free.
+  (`motion.ts`). Rules modules stay Phaser-free.
 - Content IDs do not change without a save migrate. Labels may change.
 - Asset keys (`dewslug-idle`, `haven-sky`, `herbalist-idle`) do not change
   to match labels. Route through `skin.ts`.

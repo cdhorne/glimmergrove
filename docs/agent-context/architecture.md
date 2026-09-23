@@ -23,16 +23,12 @@ import in PlayView) so the title screen can render without the engine.
 3. `save.ts` is the durable blob. Scene mutates it; React reads a copy
    after `saved`.
 4. Pure modules (`feel`, `combat`, `mobs`, `economy`, `world/rules`,
-   `world/travel`, `world/combat-run`, `world/piles`) take numbers and
+   `world/travel`, `world/combat-run`, `world/harvest`) take numbers and
    return plans.
 5. `WorldScene` applies those plans to Arcade bodies and sprites.
 
-## Legacy wraps
-
-`installPiles(WorldScene)` and `installSolids(WorldScene)` still patch
-the scene prototype from `createGame`. That is the old style. New work
-should be a function the scene calls, same as `applyPlayerMotion` and
-`planHurt`. Do not add a third installer.
+Prototype `installX(WorldScene)` wraps are gone. New work is a function
+the scene calls, same as `applyPlayerMotion`, `planHurt`, `grantHarvest`.
 
 ## Persistence
 
