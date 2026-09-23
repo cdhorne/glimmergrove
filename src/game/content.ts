@@ -132,7 +132,7 @@ export type MapDef = {
 };
 
 const GROUND_H = 72;
-const WOOD_H = 26;
+const WOOD_H = 16;
 
 function ground(width: number): PlatformDef {
   return { x: 0, y: GROUND_Y, w: width, h: GROUND_H, kind: "grass" };
