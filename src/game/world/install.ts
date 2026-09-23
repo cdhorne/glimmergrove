@@ -15,8 +15,6 @@ import { dumpKind, grantPile, hudEconomy, pileAmount, shouldSpawn, skinFor } fro
 type SceneLike = {
   mapId: string;
   save: SaveData;
-  physics: Phaser.Physics.Arcade.ArcadePhysics;
-  solids: Phaser.Physics.Arcade.StaticGroup;
   mobs: Array<
     Phaser.Physics.Arcade.Sprite & {
       kind: string;
@@ -32,14 +30,6 @@ type SceneLike = {
   changingMap: boolean;
   dead: boolean;
 };
-
-function passOneWay(
-  _mob: unknown,
-  plat: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile,
-) {
-  const obj = plat as Phaser.GameObjects.GameObject;
-  return !obj.getData?.("oneWay");
-}
 
 export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
   const proto = SceneCls.prototype as SceneLike & {
@@ -93,12 +83,6 @@ export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
         mob.setScale(0.36);
         mob.setTint(0x3d5c3a);
       }
-    }
-    const world = this.physics.world;
-    for (const col of world.colliders.getActive()) {
-      const hitsMob = col.object1 === mob || col.object2 === mob;
-      const hitsSolids = col.object1 === this.solids || col.object2 === this.solids;
-      if (hitsMob && hitsSolids) col.setProcessCallback(passOneWay, this);
     }
     return mob;
   };
