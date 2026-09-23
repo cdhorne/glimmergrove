@@ -16,10 +16,13 @@ import { sfxPlay } from "../audio";
 import { gameBus } from "../bus";
 import { loadSave, writeSave, defaultSave, type SaveData } from "../save";
 import { applyPlayerMotion } from "../motion";
-import { applyUse, contactDamage } from "../world/rules";
+import { GRAVITY_DOWN, MAX_FALL, landsOn } from "../feel";
+import { stepMob } from "../mobs";
+import { applyUse } from "../world/rules";
 import { pitDeath, tickTravel } from "../world/travel";
 import { emitWorldHud } from "../world/present";
 import { skinFor } from "../world/piles";
+import { planHurt, planTouch } from "../world/combat-run";
 
 type Mob = Phaser.Physics.Arcade.Sprite & {
   kind: MonsterKind;
@@ -133,8 +136,8 @@ export class WorldScene extends Phaser.Scene {
     const pbody = this.player.body as Phaser.Physics.Arcade.Body;
     pbody.setSize(42, 78);
     pbody.setOffset(75, 108);
-    this.player.setMaxVelocity(job.speed, 1100);
-    this.player.setGravityY(1680);
+    this.player.setMaxVelocity(job.speed, MAX_FALL);
+    this.player.setGravityY(GRAVITY_DOWN);
     this.playSafe(`${this.jobId}-idle`);
     this.invuln = 0.9;
     this.physics.add.collider(this.player, this.solids, undefined, (_p, plat) =>
@@ -173,11 +176,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   platformProcess(plat: Phaser.GameObjects.TileSprite) {
-    if (!plat.getData("oneWay")) return true;
-    if (this.skipOneWay > 0) return false;
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const platBody = plat.body as Phaser.Physics.Arcade.StaticBody;
-    return body.velocity.y >= 0 && body.bottom <= platBody.top + 10;
+    return landsOn(Boolean(plat.getData("oneWay")), this.skipOneWay > 0, body.velocity.y, body.bottom, platBody.top);
   }
 
   spawnActors() {
@@ -322,16 +323,15 @@ export class WorldScene extends Phaser.Scene {
 
   hurtMob(mob: Mob, dmg: number) {
     if (!mob.active) return;
-    const def = MONSTERS[mob.kind];
-    const rolled = Math.max(1, Math.round(dmg * (0.85 + Math.random() * 0.3)));
-    mob.hp -= rolled;
-    mob.hurtT = 0.14;
-    this.lastHits.push({ k: mob.kind, dmg: rolled, x: Math.round(mob.x), n: "hit" });
+    const plan = planHurt({ kind: mob.kind, hp: mob.hp, dmg, playerX: this.player.x, mobX: mob.x });
+    mob.hp = plan.hp;
+    mob.hurtT = plan.stun;
+    this.lastHits.push({ k: mob.kind, dmg: plan.rolled, x: Math.round(mob.x), n: "hit" });
     sfxPlay.hit();
-    if (mob.hp <= 0) this.killMob(mob);
-    else {
+    if (plan.dead) this.killMob(mob);
+    else if (plan.knock) {
       const body = mob.body as Phaser.Physics.Arcade.Body;
-      body.setVelocityX(-Math.sign(mob.x - this.player.x || this.facing) * 90 * def.knockback);
+      body.setVelocity(plan.knock.vx, plan.knock.vy);
     }
   }
 
@@ -359,12 +359,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   touchMob(mob: Mob) {
-    if (!mob.active || this.invuln > 0 || this.dead) return;
-    const dmg = contactDamage(MONSTERS[mob.kind].atk, this.def());
-    this.save.hp -= dmg;
-    this.invuln = 1.05;
+    if (!mob.active) return;
+    const plan = planTouch({
+      kind: mob.kind,
+      def: this.def(),
+      playerX: this.player.x,
+      mobX: mob.x,
+      invuln: this.invuln,
+      dead: this.dead,
+    });
+    if (!plan) return;
+    this.save.hp -= plan.dmg;
+    this.invuln = plan.invuln;
+    this.knockLock = plan.knock.stun;
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setVelocity(-this.facing * 120, -180);
+    body.setVelocity(plan.knock.vx, plan.knock.vy);
     sfxPlay.hurt();
     if (this.save.hp <= 0) this.die();
   }
@@ -372,19 +381,29 @@ export class WorldScene extends Phaser.Scene {
   updateMobs(dt: number) {
     for (const mob of this.mobs) {
       if (!mob.active) continue;
-      mob.hurtT = Math.max(0, mob.hurtT - dt);
-      const def = MONSTERS[mob.kind];
       const body = mob.body as Phaser.Physics.Arcade.Body;
       if (mob.y > GAME_H + 20) {
         mob.setPosition(mob.originX, mob.originY - 4);
         body.setVelocity(0, 0);
         continue;
       }
-      const dist = Math.abs(this.player.x - mob.x);
-      const aggro = dist < (mob.kind === "warden" || mob.kind === "gorecap" ? 420 : 220);
-      if (aggro) mob.dir = this.player.x < mob.x ? -1 : 1;
-      else if (Math.abs(mob.x - mob.originX) > 90) mob.dir = mob.x > mob.originX ? -1 : 1;
-      body.setVelocityX(mob.dir * def.speed);
+      const intent = stepMob({
+        dt,
+        hurtT: mob.hurtT,
+        dir: mob.dir,
+        x: mob.x,
+        y: mob.y,
+        originX: mob.originX,
+        playerX: this.player.x,
+        playerY: this.player.y,
+        kind: mob.kind,
+        speed: MONSTERS[mob.kind].speed,
+        grounded: body.blocked.down || body.touching.down,
+        groundAhead: true,
+      });
+      mob.hurtT = intent.hurtT;
+      mob.dir = intent.dir;
+      if (intent.vx != null) body.setVelocityX(intent.vx);
       mob.setFlipX(mob.dir < 0);
     }
   }
