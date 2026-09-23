@@ -21,8 +21,8 @@ export const STICK_R = 56;
 
 /** Floor top. Ledges are this minus n × ledgePx(). */
 export const GROUND_Y = 468;
-/** Fraction of hop used as one comfortable step. */
-export const LEDGE_RATIO = 0.62;
+/** Comfortable single hop. Still under jumpPeakPx so the board is landable. */
+export const LEDGE_RATIO = 0.82;
 
 export const CHROME = {
   landscapeStickW: 0.32,
