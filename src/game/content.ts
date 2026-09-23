@@ -10,9 +10,7 @@ export type ItemSlot = "weapon" | "armor" | "acc";
 export type Strike = {
   shape: "melee" | "orb" | "arrow";
   reach: number;
-  /** How many bodies this strike may touch before it is absorbed. 1 = stop on first. */
   pierce: number;
-  /** Damage multiplier lost per extra target (0.2 → 80% on the second). */
   falloff: number;
   shots: number;
 };
@@ -156,7 +154,7 @@ export const MAPS: Record<MapId, MapDef> = {
     platforms: [
       ground(2400),
       wood(540, 1, 220),
-      wood(980, 2, 180),
+      wood(980, 1, 180),
       wood(1500, 1, 260),
     ],
     pits: [],
@@ -174,10 +172,10 @@ export const MAPS: Record<MapId, MapDef> = {
       { x: 0, y: GROUND_Y, w: 920, h: GROUND_H, kind: "grass" },
       { x: 1088, y: GROUND_Y, w: 2312, h: GROUND_H, kind: "grass" },
       wood(820, 1, 230),
-      wood(1000, 2, 200),
-      wood(1600, 2, 240),
-      wood(2100, 2, 200),
-      wood(2580, 2, 280),
+      wood(1000, 1, 200),
+      wood(1600, 1, 240),
+      wood(2100, 1, 200),
+      wood(2580, 1, 280),
     ],
     pits: [{ x: 920, w: 168 }],
     portals: [
@@ -188,10 +186,10 @@ export const MAPS: Record<MapId, MapDef> = {
       { x: 520, y: GROUND_Y, kind: "dewslug" },
       { x: 740, y: GROUND_Y, kind: "dewslug" },
       { x: 1400, y: GROUND_Y, kind: "capling" },
-      { x: 1680, y: ledgeY(2), kind: "dewslug" },
+      { x: 1680, y: ledgeY(1), kind: "dewslug" },
       { x: 1980, y: GROUND_Y, kind: "capling" },
       { x: 2320, y: GROUND_Y, kind: "dewslug" },
-      { x: 2640, y: ledgeY(2), kind: "capling" },
+      { x: 2640, y: ledgeY(1), kind: "capling" },
       { x: 2880, y: GROUND_Y, kind: "capling" },
     ],
   },
@@ -204,7 +202,7 @@ export const MAPS: Record<MapId, MapDef> = {
     platforms: [
       ground(2000),
       wood(620, 1, 200),
-      wood(1180, 2, 220),
+      wood(1180, 1, 220),
       wood(1560, 1, 180),
     ],
     pits: [],
