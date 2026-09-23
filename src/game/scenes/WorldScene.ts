@@ -23,7 +23,7 @@ import { applyUse } from "../world/rules";
 import { gapDeath, inGap, tickTravel } from "../world/travel";
 import { emitWorldHud } from "../world/present";
 import { grantHarvest, harvestAmount, loseToGap, shouldSpawn, skinFor } from "../world/harvest";
-import { inStrikeLane, planHurt, planTouch, strikeReach } from "../world/combat-run";
+import { boltSpec, inStrikeLane, planHurt, planTouch, strikeReach } from "../world/combat-run";
 
 type Mob = Phaser.Physics.Arcade.Sprite & {
   kind: MonsterKind;
@@ -224,7 +224,7 @@ export class WorldScene extends Phaser.Scene {
     mb.setSize(def.hitW / sx, def.hitH / sy, false);
     mb.setOffset((sprite.width - def.hitW / sx) * 0.5, sprite.height - def.hitH / sy);
     mb.setAllowGravity(true);
-    sprite.setCollideWorldBounds(true).setMaxVelocity(def.speed, 900).setGravityY(1800);
+    sprite.setCollideWorldBounds(true).setMaxVelocity(Math.max(def.speed, 340), 640).setGravityY(2200);
     this.physics.add.collider(sprite, this.solids, undefined, (_m, plat) => {
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       const platBody = (plat as Phaser.GameObjects.TileSprite).body as Phaser.Physics.Arcade.StaticBody;
@@ -295,6 +295,11 @@ export class WorldScene extends Phaser.Scene {
     this.playSafe(`${this.jobId}-attack`);
     sfxPlay.attack();
     const dmg = this.atk() * (skill ? 1.7 : 1);
+    const bolt = boltSpec(strike);
+    if (bolt) {
+      this.fireBolts(bolt, dmg, strike.pierce);
+      return;
+    }
     const reach = strikeReach(strike);
     const hits = this.mobs
       .filter((mob) => {
@@ -312,6 +317,35 @@ export class WorldScene extends Phaser.Scene {
       .sort((a, b) => (a.x - this.player.x) * this.facing - (b.x - this.player.x) * this.facing)
       .slice(0, Math.max(1, strike.pierce));
     hits.forEach((mob) => this.hurtMob(mob, dmg));
+  }
+
+  fireBolts(bolt: NonNullable<ReturnType<typeof boltSpec>>, dmg: number, pierce: number) {
+    const key = this.textures.exists(bolt.key) ? bolt.key : this.tex("glim");
+    for (let i = 0; i < bolt.shots; i++) {
+      const mid = (bolt.shots - 1) / 2;
+      const yOff = (i - mid) * bolt.spread;
+      const shot = this.bullets.get(this.player.x + this.facing * 28, this.player.y - 46 + yOff, key) as Phaser.Physics.Arcade.Sprite | null;
+      if (!shot) continue;
+      shot.setActive(true).setVisible(true).setDepth(9).setScale(bolt.key === "orb" ? 0.28 : 0.34);
+      shot.setFlipX(this.facing < 0);
+      const body = shot.body as Phaser.Physics.Arcade.Body;
+      body.setAllowGravity(false);
+      body.setVelocity(this.facing * bolt.speed, 0);
+      shot.setData("dmg", dmg);
+      shot.setData("pierce", Math.max(1, pierce));
+      if (this.anims.exists(bolt.key)) shot.play(bolt.key, true);
+      this.physics.add.overlap(shot, this.mobs as unknown as Phaser.GameObjects.GameObject[], (_b, m) => {
+        const mob = m as Mob;
+        if (!shot.active || !mob.active) return;
+        this.hurtMob(mob, Number(shot.getData("dmg") ?? dmg));
+        const left = Number(shot.getData("pierce") ?? 1) - 1;
+        shot.setData("pierce", left);
+        if (left <= 0) shot.destroy();
+      });
+      this.time.delayedCall(bolt.life * 1000, () => {
+        if (shot.active) shot.destroy();
+      });
+    }
   }
 
   atk() {
@@ -398,6 +432,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   updateMobs(dt: number) {
+    const mapW = MAPS[this.mapId].width;
     for (const mob of this.mobs) {
       if (!mob.active) continue;
       const body = mob.body as Phaser.Physics.Arcade.Body;
@@ -414,10 +449,19 @@ export class WorldScene extends Phaser.Scene {
         speed: MONSTERS[mob.kind].speed,
         grounded: body.blocked.down || body.touching.down,
         groundAhead: true,
+        mapW,
       });
       mob.hurtT = intent.hurtT;
       mob.dir = intent.dir;
+      if (intent.pinX != null) {
+        mob.setX(intent.pinX);
+        if (body.velocity.x * (intent.pinX - 48 > 10 ? 1 : -1) < 0) body.setVelocityX(0);
+      }
       if (intent.vx != null) body.setVelocityX(intent.vx);
+      if (mob.y > GAME_H + 20) {
+        mob.setPosition(mob.originX, mob.originY);
+        body.setVelocity(0, 0);
+      }
       mob.setFlipX(mob.dir < 0);
     }
   }
