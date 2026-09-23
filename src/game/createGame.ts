@@ -7,14 +7,12 @@ import { installCombat } from "./installCombat";
 import { installSolids } from "./installSolids";
 import { registerKinds } from "./world/kinds";
 import { installPiles } from "./world/install";
-import { installUse } from "./installUse";
 
 registerKinds();
 installMotion(WorldScene);
 installCombat(WorldScene);
 installPiles(WorldScene);
 installSolids(WorldScene);
-installUse(WorldScene);
 
 export type CreateOpts = {
   parent: HTMLElement;
