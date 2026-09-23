@@ -1,5 +1,5 @@
 /** Hit plans the scene applies. No Phaser. */
-import { MONSTERS, type MonsterKind } from "../content.ts";
+import { MONSTERS, type MonsterKind, type Strike } from "../content.ts";
 import { mobHitKnock, playerHitKnock } from "../combat.ts";
 import { contactDamage } from "./rules.ts";
 import type { Knock } from "../feel.ts";
@@ -52,4 +52,27 @@ export function planTouch(opts: {
     knock: playerHitKnock(opts.playerX, opts.mobX),
     invuln: 1.05,
   };
+}
+
+/** Orb/arrow data used reach 0, which never connected. Give them a lane. */
+export function strikeReach(strike: Strike) {
+  if (strike.reach > 0) return strike.reach;
+  if (strike.shape === "orb") return 260;
+  if (strike.shape === "arrow") return 220;
+  return 70;
+}
+
+export function inStrikeLane(opts: {
+  playerX: number;
+  playerY: number;
+  facing: number;
+  mobX: number;
+  mobY: number;
+  hitW: number;
+  reach: number;
+}) {
+  if (Math.abs(opts.mobY - opts.playerY) > 96) return false;
+  const half = opts.hitW * 0.5;
+  const toward = (opts.mobX - opts.playerX) * opts.facing;
+  return toward + half > -48 && toward - half < opts.reach + 16;
 }

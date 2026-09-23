@@ -2,6 +2,8 @@ import { MAPS, type MapId } from "../content.ts";
 import { keepWorldPrompt, portalLocked } from "./rules.ts";
 import type { ActionFrame } from "../input.ts";
 
+export const PORTAL_NEAR = 72;
+
 export type TravelState = {
   mapId: MapId;
   playerX: number;
@@ -37,19 +39,19 @@ export function tickTravel(s: TravelState, dt: number, a: ActionFrame): TravelTi
 
   let onPortal = false;
   for (const p of map.portals) {
-    if (Math.abs(s.playerX - p.x) >= 100) continue;
+    if (Math.abs(s.playerX - p.x) >= PORTAL_NEAR) continue;
     onPortal = true;
     const locked = portalLocked(s.kills, p.requireKills, s.heartwoodOpen);
     interact = { type: "portal", to: p.to, require: p.requireKills };
     if (!keep) {
-      prompt = locked ? `Locked · hunt ${p.requireKills! - s.kills} more` : `Walk in  ·  ${p.label}`;
+      prompt = locked ? `Locked · hunt ${p.requireKills! - s.kills} more` : `E  Enter  ·  ${p.label}`;
     }
-    if (!locked && s.portalLock <= 0) {
-      portalDwell += dt;
-      if (a.interactHeld || a.justInteract || portalDwell > 0.28) enter = p.to;
+    if (!locked && s.portalLock <= 0 && (a.justInteract || a.interactHeld)) {
+      enter = p.to;
     }
   }
   if (!onPortal) portalDwell = 0;
+  else portalDwell += dt;
 
   if (s.mapId === "dewpath" && s.playerX > 780 && s.playerX < 940 && !keep && !prompt) {
     prompt = "Jump the mist gap";
