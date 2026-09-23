@@ -66,9 +66,6 @@ function authPopupPlugin(): Plugin {
     name: "app-builder:auth-popup",
     apply: "serve",
     configureServer(server) {
-      // Register immediately (not in a returned post-hook) so we run BEFORE
-      // TanStack Start / the SPA HTML fallback. A model-authored
-      // `src/routes/auth/popup.tsx` React page must never win this path.
       server.middlewares.use(async (req, res, next) => {
         try {
           const rawUrl = req.url ?? "";
@@ -100,8 +97,6 @@ function authPopupPlugin(): Plugin {
               requestHeaders.set(key, value);
             }
           }
-          // Ensure Host is the public preview host so Better Auth's dynamic
-          // baseURL / redirect_uri match the popup origin.
           if (!requestHeaders.has("host")) requestHeaders.set("host", host);
 
           const request = new Request(`${proto}://${host}${rawUrl}`, {
@@ -115,7 +110,6 @@ function authPopupPlugin(): Plugin {
           const response = await mod.handleAuthPopupRequest(request);
 
           res.statusCode = response.status;
-          // Preserve multiple Set-Cookie headers (OAuth state + session).
           const setCookies =
             typeof response.headers.getSetCookie === "function"
               ? response.headers.getSetCookie()
@@ -142,10 +136,9 @@ function authPopupPlugin(): Plugin {
   };
 }
 
-// `0.0.0.0:8080` is the live-preview contract — don't change host/port.
-// The dev server starts once `src/router.tsx` and `src/routes/` exist — see
-// AGENTS.md § "First scaffold".
 const pages = process.env.GITHUB_PAGES === "1";
+const staticSpa =
+  pages || process.env.CF_PAGES === "1" || process.env.STATIC_SPA === "1";
 
 export default defineConfig(({ command, isPreview }) => ({
   base: pages ? "/glimmergrove/" : "/",
@@ -164,15 +157,12 @@ export default defineConfig(({ command, isPreview }) => ({
   optimizeDeps: { include: ["phaser"] },
   plugins: [
     pgliteBootstrapPlugin(),
-    // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
-    // Dev-only /__app-env, read by scripts/check-auth-invariant.mjs.
     appEnvPlugin(),
-    // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
     grokPwaPlugin(),
     tailwindcss(),
     tanstackStart(
-      pages
+      staticSpa
         ? {
             spa: {
               enabled: true,
@@ -181,7 +171,7 @@ export default defineConfig(({ command, isPreview }) => ({
                 outputPath: "/index.html",
               },
             },
-            router: { basepath: "/glimmergrove" },
+            router: pages ? { basepath: "/glimmergrove" } : {},
           }
         : {},
     ),
@@ -189,14 +179,10 @@ export default defineConfig(({ command, isPreview }) => ({
       ? [
           nitro({
             preset: "vercel",
-            // Auto-registers server/middleware/* (the PWA install page +
-            // manifest + head-tag middleware). Nitro v3 defaults serverDir to
-            // false, so removing this silently unwires /?install=1 on deploys.
-            serverDir: pages ? false : "./server",
+            serverDir: staticSpa ? false : "./server",
           }),
         ]
       : []),
     viteReact(),
   ],
 }));
-
