@@ -11,6 +11,13 @@ import { loadSave, writeSave } from "@/game/save";
 import { JOBS } from "@/game/content";
 import { YardPanel } from "@/components/yard-panel";
 import { unlockAudio, setMuted, isMuted } from "@/game/audio";
+import type { MoveStyle } from "@/game/scheme";
+
+const STYLES: { id: MoveStyle; label: string }[] = [
+  { id: "ghost", label: "Ghost stick" },
+  { id: "well", label: "Fixed well" },
+  { id: "flick", label: "Flick jump" },
+];
 
 export function PlayView() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -27,6 +34,8 @@ export function PlayView() {
   const setScreen = useGameUI((s) => s.setScreen);
   const save = useGameUI((s) => s.save);
   const refresh = useGameUI((s) => s.refreshSave);
+  const moveStyle = useGameUI((s) => s.moveStyle);
+  const setMoveStyle = useGameUI((s) => s.setMoveStyle);
   const [mute, setMute] = useState(false);
 
   useEffect(() => {
@@ -105,6 +114,18 @@ export function PlayView() {
           <div className="w-full max-w-sm rounded-[length:var(--radius-xl)] border border-border bg-bg-elevated p-6">
             <h2 className="font-display text-2xl font-semibold">Paused</h2>
             <p className="mt-1 text-sm text-fg-muted">Progress is saved on this device.</p>
+            <p className="mt-4 text-xs uppercase tracking-wider text-fg-subtle">Move style</p>
+            <div className="mt-1 flex flex-col gap-1">
+              {STYLES.map((s) => (
+                <Button
+                  key={s.id}
+                  variant={moveStyle === s.id ? "default" : "secondary"}
+                  onClick={() => setMoveStyle(s.id)}
+                >
+                  {s.label}
+                </Button>
+              ))}
+            </div>
             <div className="mt-5 flex flex-col gap-2">
               <Button onClick={() => setPaused(false)}>Resume</Button>
               <Button
