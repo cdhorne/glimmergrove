@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { planHurt, planTouch, rollStrike } from "./combat-run.ts";
+import { inStrikeLane, planHurt, planTouch, rollStrike, strikeReach } from "./combat-run.ts";
+import { JOBS } from "../content.ts";
 import { PLAYER_KNOCK_X } from "../feel.ts";
 
 test("rollStrike stays in the 85–115% band and never zero", () => {
@@ -24,4 +25,21 @@ test("planTouch uses contact floor and throws the player away from the mob", () 
   assert.ok(hit);
   assert.equal(hit!.dmg, 24);
   assert.equal(hit!.knock.vx, PLAYER_KNOCK_X);
+});
+
+test("weaver and ranger strikes have a lane even when content reach is 0", () => {
+  assert.ok(strikeReach(JOBS.weaver.attack) >= 200);
+  assert.ok(strikeReach(JOBS.ranger.attack) >= 200);
+  assert.equal(strikeReach(JOBS.guardian.attack), 70);
+});
+
+test("a slug in front of the guardian is in the lane", () => {
+  assert.equal(
+    inStrikeLane({ playerX: 100, playerY: 400, facing: 1, mobX: 150, mobY: 400, hitW: 54, reach: 70 }),
+    true,
+  );
+  assert.equal(
+    inStrikeLane({ playerX: 100, playerY: 400, facing: 1, mobX: 400, mobY: 400, hitW: 54, reach: 70 }),
+    false,
+  );
 });

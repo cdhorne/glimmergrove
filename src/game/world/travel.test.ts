@@ -19,22 +19,57 @@ const idle = {
   justUse: false,
 };
 
-test("haven stinglane portal is unlocked and dwell-enters", () => {
-  const first = tickTravel(
+test("standing on a portal does not suck you through", () => {
+  const idleNear = tickTravel(
     {
       mapId: "haven",
-      playerX: 380,
+      playerX: 80,
+      kills: 0,
+      heartwoodOpen: false,
+      prompt: null,
+      portalLock: 0,
+      portalDwell: 1,
+    },
+    0.3,
+    idle,
+  );
+  assert.equal(idleNear.interact?.to, "stinglane");
+  assert.equal(idleNear.enter, undefined);
+});
+
+test("interact enters stinglane from the west gate", () => {
+  const go = tickTravel(
+    {
+      mapId: "haven",
+      playerX: 80,
       kills: 0,
       heartwoodOpen: false,
       prompt: null,
       portalLock: 0,
       portalDwell: 0,
     },
-    0.3,
-    idle,
+    0.016,
+    { ...idle, justInteract: true },
   );
-  assert.equal(first.interact?.to, "stinglane");
-  assert.equal(first.enter, "stinglane");
+  assert.equal(go.enter, "stinglane");
+});
+
+test("spawn is not inside the stinglane gate", () => {
+  const spawn = tickTravel(
+    {
+      mapId: "haven",
+      playerX: 220,
+      kills: 0,
+      heartwoodOpen: false,
+      prompt: null,
+      portalLock: 0,
+      portalDwell: 1,
+    },
+    0.3,
+    { ...idle, justInteract: true },
+  );
+  assert.equal(spawn.interact, null);
+  assert.equal(spawn.enter, undefined);
 });
 
 test("heartwood stays locked until kills or flag", () => {

@@ -71,8 +71,8 @@ export const JOBS: Record<JobId, JobDef> = {
     skillCost: 18,
     skillName: "Cascade",
     attackName: "Dewbolt",
-    attack: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 1 },
-    skill: { shape: "orb", reach: 0, pierce: 1, falloff: 0, shots: 3 },
+    attack: { shape: "orb", reach: 260, pierce: 1, falloff: 0, shots: 1 },
+    skill: { shape: "orb", reach: 260, pierce: 1, falloff: 0, shots: 3 },
   },
   ranger: {
     id: "ranger",
@@ -90,8 +90,8 @@ export const JOBS: Record<JobId, JobDef> = {
     skillCost: 16,
     skillName: "Fan Volley",
     attackName: "Needleshot",
-    attack: { shape: "arrow", reach: 0, pierce: 1, falloff: 0, shots: 1 },
-    skill: { shape: "arrow", reach: 0, pierce: 2, falloff: 0.2, shots: 3 },
+    attack: { shape: "arrow", reach: 220, pierce: 1, falloff: 0, shots: 1 },
+    skill: { shape: "arrow", reach: 220, pierce: 2, falloff: 0.2, shots: 3 },
   },
 };
 
@@ -159,7 +159,7 @@ export const MAPS: Record<MapId, MapDef> = {
     ],
     gaps: [],
     portals: [
-      { x: 380, y: GROUND_Y, to: "stinglane", label: "Stinglane" },
+      { x: 80, y: GROUND_Y, to: "stinglane", label: "Stinglane" },
       { x: 2080, y: GROUND_Y, to: "dewpath", label: "Dewpath" },
     ],
     npc: { x: 620, y: GROUND_Y },
