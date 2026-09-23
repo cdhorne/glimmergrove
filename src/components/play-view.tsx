@@ -170,7 +170,7 @@ export function PlayView() {
             <p className="mt-4 text-xs uppercase tracking-wider text-fg-subtle">Inventory</p>
             <ul className="mt-1 max-h-40 overflow-auto text-sm touch-pan-y">
               {(save?.inventory ?? []).length === 0 ? (
-                <li className="text-fg-subtle">Empty — hunt Dewpath for drops.</li>
+                <li className="text-fg-subtle">Empty — hunt Field for drops.</li>
               ) : (
                 (save?.inventory ?? []).map((item) => (
                   <li key={item.id} className="flex items-center justify-between gap-2 py-1">
@@ -199,7 +199,7 @@ export function PlayView() {
               )}
             </ul>
             <p className="mt-3 text-xs text-fg-subtle">
-              {JOBS[save?.job ?? "guardian"].skillName} costs dew. Rest with Wren in the grove.
+              {JOBS[save?.job ?? "guardian"].skillName} costs MP. Rest at the Town NPC.
             </p>
           </div>
         </div>
