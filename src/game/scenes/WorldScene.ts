@@ -22,8 +22,9 @@ import { defaultEconomy, yieldOf } from "../economy";
 import { applyUse } from "../world/rules";
 import { gapDeath, inGap, tickTravel } from "../world/travel";
 import { emitWorldHud } from "../world/present";
-import { grantHarvest, harvestAmount, loseToGap, shouldSpawn, skinFor } from "../world/harvest";
+import { grantHarvest, harvestAmount, loseToGap, shouldSpawn } from "../world/harvest";
 import { planHurt, planTouch } from "../world/combat-run";
+import { isBossKind, NPC_SHEET, skinFor, skinLook } from "../skin";
 
 type Mob = Phaser.Physics.Arcade.Sprite & {
   kind: MonsterKind;
@@ -101,7 +102,7 @@ export class WorldScene extends Phaser.Scene {
     const job = JOBS[this.jobId];
     const map = MAPS[this.mapId];
     const existing = loadSave();
-    this.save = existing && existing.job === this.jobId ? existing : defaultSave(this.jobId, existing?.name ?? "Rowan");
+    this.save = existing && existing.job === this.jobId ? existing : defaultSave(this.jobId, existing?.name ?? "Player");
     if (!existing || existing.job !== this.jobId) {
       this.save.hp = job.hp;
       this.save.mp = job.mp;
@@ -185,10 +186,10 @@ export class WorldScene extends Phaser.Scene {
 
   spawnActors() {
     const map = MAPS[this.mapId];
-    if (map.npc && this.textures.exists("herbalist-idle")) {
-      const npc = this.add.sprite(map.npc.x, map.npc.y - 8, "herbalist-idle", 0);
+    if (map.npc && this.textures.exists(NPC_SHEET)) {
+      const npc = this.add.sprite(map.npc.x, map.npc.y - 8, NPC_SHEET, 0);
       npc.setScale(0.5).setOrigin(0.5, 1).setDepth(7);
-      if (this.anims.exists("herbalist-idle")) npc.play("herbalist-idle");
+      if (this.anims.exists(NPC_SHEET)) npc.play(NPC_SHEET);
     }
     for (const p of map.portals) {
       const spr = this.textures.exists("portal")
@@ -204,6 +205,7 @@ export class WorldScene extends Phaser.Scene {
 
   spawnMob(kind: MonsterKind, x: number, y: number) {
     const visual = skinFor(kind) as MonsterKind;
+    const look = skinLook(kind);
     const def = MONSTERS[kind] ?? MONSTERS[visual];
     const sprite = this.physics.add.sprite(x, y - 4, this.tex(`${visual}-idle`), 0) as Mob;
     sprite.kind = kind;
@@ -215,9 +217,8 @@ export class WorldScene extends Phaser.Scene {
     sprite.originX = x;
     sprite.originY = y;
     sprite.uid = this.nextMobId++;
-    sprite.setScale(kind === "warden" || kind === "gorecap" ? 0.5 : 0.4).setOrigin(0.5, 1).setDepth(7);
-    if (kind === "nettle") sprite.setTint(0xc45c4a);
-    if (kind === "gorecap") sprite.setTint(0x6a3040);
+    sprite.setScale(look.scale).setOrigin(0.5, 1).setDepth(7);
+    if (look.tint != null) sprite.setTint(look.tint);
     const mb = sprite.body as Phaser.Physics.Arcade.Body;
     const sx = Math.abs(sprite.scaleX) || 1;
     const sy = Math.abs(sprite.scaleY) || 1;
@@ -343,7 +344,7 @@ export class WorldScene extends Phaser.Scene {
 
   killMob(mob: Mob) {
     const def = MONSTERS[mob.kind];
-    const isBoss = mob.kind === "warden";
+    const isBoss = isBossKind(mob.kind);
     const yieldKind = yieldOf(mob.kind);
     if (yieldKind && this.save.economy) {
       const { prompt } = grantHarvest(this.save.economy, yieldKind, harvestAmount(mob.kind));
@@ -355,7 +356,10 @@ export class WorldScene extends Phaser.Scene {
     this.save.exp += def.exp;
     this.save.kills += 1;
     if (this.save.kills >= 8) this.save.heartwoodOpen = true;
-    if (isBoss) this.save.wardenDown = true;
+    if (isBoss) {
+      this.save.wardenDown = true;
+      this.prompt = "The boss is down";
+    }
     this.save.glims += def.glims;
     const drop = rollDrop(isBoss);
     if (drop) this.save.inventory.push(drop);
@@ -442,7 +446,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.interact?.type !== "npc") return;
     this.save.hp = this.maxHp();
     this.save.mp = this.maxMp();
-    this.prompt = "Rested. HP and dew restored.";
+    this.prompt = "Rested. HP and MP restored.";
     sfxPlay.pickup();
     this.persist();
     gameBus.emit("open-yard");
@@ -484,7 +488,7 @@ export class WorldScene extends Phaser.Scene {
       this.time.delayedCall(1200, () => {
         if (this.prompt === "Lost to the gap") this.prompt = null;
       });
-      if (kind !== "warden") {
+      if (!isBossKind(kind)) {
         this.time.delayedCall(8000, () => {
           if (!this.changingMap && !this.dead) this.spawnMob(kind, ox, oy);
         });
