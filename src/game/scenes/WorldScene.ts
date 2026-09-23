@@ -23,7 +23,7 @@ import { applyUse } from "../world/rules";
 import { gapDeath, inGap, tickTravel } from "../world/travel";
 import { emitWorldHud } from "../world/present";
 import { grantHarvest, harvestAmount, loseToGap, shouldSpawn, skinFor } from "../world/harvest";
-import { planHurt, planTouch } from "../world/combat-run";
+import { inStrikeLane, planHurt, planTouch, strikeReach } from "../world/combat-run";
 
 type Mob = Phaser.Physics.Arcade.Sprite & {
   kind: MonsterKind;
@@ -295,14 +295,19 @@ export class WorldScene extends Phaser.Scene {
     this.playSafe(`${this.jobId}-attack`);
     sfxPlay.attack();
     const dmg = this.atk() * (skill ? 1.7 : 1);
-    if (strike.shape !== "melee") return;
+    const reach = strikeReach(strike);
     const hits = this.mobs
       .filter((mob) => {
         if (!mob.active) return false;
-        if (Math.abs(mob.y - this.player.y) > 96) return false;
-        const half = MONSTERS[mob.kind].hitW * 0.5;
-        const toward = (mob.x - this.player.x) * this.facing;
-        return toward + half > -48 && toward - half < strike.reach + 16;
+        return inStrikeLane({
+          playerX: this.player.x,
+          playerY: this.player.y,
+          facing: this.facing,
+          mobX: mob.x,
+          mobY: mob.y,
+          hitW: MONSTERS[mob.kind].hitW,
+          reach,
+        });
       })
       .sort((a, b) => (a.x - this.player.x) * this.facing - (b.x - this.player.x) * this.facing)
       .slice(0, Math.max(1, strike.pierce));
