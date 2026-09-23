@@ -42,6 +42,8 @@ export type HudSnap = {
   skillCd: number;
   skillMax: number;
   prompt: string | null;
+  canUse?: boolean;
+  skillCost?: number;
   dead: boolean;
   paused: boolean;
   bagFeed: number;

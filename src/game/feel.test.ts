@@ -77,11 +77,13 @@ test("visualViewport pin follows the toolbar, not 100dvh", () => {
   assert.equal(portrait.orientation, "portrait");
 });
 
-test("landscape chrome stays in the corners", () => {
+test("landscape chrome stays in the corners and meets min targets", () => {
   assert.ok(CHROME.landscapeStickW <= 0.34);
   assert.ok(CHROME.landscapeStickHPx <= 120);
-  assert.ok(CHROME.landscapeJumpPx <= 56);
-  assert.ok(CHROME.landscapeAttackPx <= 48);
+  assert.ok(CHROME.landscapeJumpPx >= CHROME.minTargetPx);
+  assert.ok(CHROME.landscapeAttackPx >= CHROME.minTargetPx);
+  assert.ok(CHROME.landscapeJumpPx <= 72);
+  assert.ok(CHROME.landscapeHudMaxW <= 320);
 });
 
 test("knockback shoves away and scales with mass", () => {

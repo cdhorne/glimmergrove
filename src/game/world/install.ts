@@ -6,7 +6,7 @@
  * Does not replace combat, wander, or input.
  */
 import * as Phaser from "phaser";
-import { GAME_H, MAPS, type MonsterKind } from "../content";
+import { GAME_H, MAPS, MONSTERS, type MonsterKind } from "../content";
 import { defaultEconomy, pileOf } from "../economy";
 import { gameBus } from "../bus";
 import type { SaveData } from "../save";
@@ -71,6 +71,11 @@ export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
     };
     if (kind !== skin) {
       mob.kind = kind;
+      const def = MONSTERS[kind as keyof typeof MONSTERS];
+      if (def) {
+        (mob as typeof mob & { hp: number; maxHp: number }).hp = def.hp;
+        (mob as typeof mob & { hp: number; maxHp: number }).maxHp = def.hp;
+      }
       if (kind === "bloom") {
         mob.setScale(0.52);
         mob.setTint(0x7ecf8a);
@@ -82,6 +87,14 @@ export function installPiles(SceneCls: { prototype: Record<string, unknown> }) {
       if (kind === "bramble") {
         mob.setScale(0.36);
         mob.setTint(0x3d5c3a);
+      }
+      if (kind === "nettle") {
+        mob.setScale(0.34);
+        mob.setTint(0xc45c4a);
+      }
+      if (kind === "gorecap") {
+        mob.setScale(0.4);
+        mob.setTint(0x6a3040);
       }
     }
     return mob;

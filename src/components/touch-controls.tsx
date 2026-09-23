@@ -1,22 +1,33 @@
-import { Sparkles, Sword, ChevronsUp, FlaskConical, Hand } from "lucide-react";
-import { touch } from "@/game/input";
+import { Sparkles, Sword, ChevronsUp, CircleDot, Hand } from "lucide-react";
+import { getDevice, subscribeDevice, touch } from "@/game/input";
+import { computeStick, STICK_R } from "@/game/feel";
+import {
+  mapFlick,
+  resolveHoldRelease,
+  resolveVerbs,
+  shouldShowOverlay,
+  type MoveStyle,
+} from "@/game/scheme";
 import { cn } from "@/lib/utils";
-import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useGameUI } from "@/game/store";
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent, type ReactNode } from "react";
 
-const STICK_R = 56;
+function useDevice() {
+  return useSyncExternalStore(subscribeDevice, getDevice, getDevice);
+}
 
 function Hold({
   className,
   label,
   icon,
-  on,
-  off,
+  onDown,
+  onUp,
 }: {
   className?: string;
   label: string;
   icon: ReactNode;
-  on: () => void;
-  off: () => void;
+  onDown: () => void;
+  onUp: () => void;
 }) {
   const [lit, setLit] = useState(false);
   function down(e: PointerEvent) {
@@ -24,12 +35,12 @@ function Hold({
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setLit(true);
-    on();
+    onDown();
   }
   function up(e: PointerEvent) {
     e.preventDefault();
     setLit(false);
-    off();
+    onUp();
   }
   return (
     <button
@@ -50,23 +61,18 @@ function Hold({
   );
 }
 
-function Stick() {
+function Stick({ style }: { style: MoveStyle }) {
   const origin = useRef<{ x: number; y: number } | null>(null);
-  const [knob, setKnob] = useState({ x: 0, y: 0, active: false });
+  const [knob, setKnob] = useState({ x: 0, y: 0, active: false, ox: 0, oy: 0 });
 
   function apply(clientX: number, clientY: number) {
     const o = origin.current;
     if (!o) return;
-    const dx = clientX - o.x;
-    const dy = clientY - o.y;
-    const mag = Math.hypot(dx, dy);
-    const cap = Math.min(mag, STICK_R);
-    const nx = mag > 0 ? (dx / mag) * cap : 0;
-    const ny = mag > 0 ? (dy / mag) * cap : 0;
-    touch.moveX = nx / STICK_R;
-    touch.moveY = ny / STICK_R;
-    touch.down = touch.moveY > 0.55;
-    setKnob({ x: nx, y: ny, active: true });
+    const s = computeStick(clientX - o.x, clientY - o.y, STICK_R);
+    touch.moveX = s.moveX;
+    touch.moveY = s.moveY;
+    touch.down = s.down;
+    setKnob({ x: s.nx, y: s.ny, active: true, ox: o.x, oy: o.y });
   }
 
   function down(e: PointerEvent) {
@@ -85,8 +91,11 @@ function Stick() {
     touch.moveX = 0;
     touch.moveY = 0;
     touch.down = false;
-    setKnob({ x: 0, y: 0, active: false });
+    setKnob({ x: 0, y: 0, active: false, ox: 0, oy: 0 });
   }
+
+  const ghost = style === "ghost" || style === "flick";
+  const wellVisible = style === "well" || knob.active;
 
   return (
     <div
@@ -98,80 +107,159 @@ function Stick() {
       onContextMenu={(e) => e.preventDefault()}
       aria-label="Move"
     >
-      <div className="pointer-events-none absolute bottom-2 left-2 size-28 rounded-full border border-border bg-bg/25 landscape:size-20 landscape:bg-bg/15">
+      {wellVisible ? (
         <div
           className={cn(
-            "absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-bg/70 landscape:size-9",
-            knob.active && "border-primary bg-primary/30",
+            "pointer-events-none absolute size-28 rounded-full border border-border bg-bg/25 landscape:size-20",
+            ghost && knob.active ? "landscape:bg-bg/20" : "bottom-2 left-2 landscape:bg-bg/15",
           )}
-          style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
-        />
-      </div>
+          style={
+            ghost && knob.active
+              ? { left: knob.ox - 56, top: knob.oy - 56, position: "fixed" }
+              : undefined
+          }
+        >
+          <div
+            className={cn(
+              "absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-bg/70 landscape:size-9",
+              knob.active && "border-primary bg-primary/30",
+            )}
+            style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
 
-export function TouchControls() {
+function AttackHold({ canSkill }: { canSkill: boolean }) {
+  const start = useRef(0);
+  function down() {
+    start.current = performance.now();
+    touch.attack = true;
+    touch.skill = false;
+  }
+  function up() {
+    const kind = resolveHoldRelease(performance.now() - start.current);
+    touch.attack = kind === "attack";
+    touch.skill = kind === "skill" && canSkill;
+    queueMicrotask(() => {
+      touch.attack = false;
+      touch.skill = false;
+    });
+  }
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 [@media(hover:hover)_and_(pointer:fine)]:hidden">
+    <Hold
+      label={canSkill ? "Attack or skill" : "Attack"}
+      className="size-16 min-h-[44px] min-w-[44px] landscape:size-14"
+      icon={<Sword className="size-6 landscape:size-5" />}
+      onDown={down}
+      onUp={up}
+    />
+  );
+}
+
+export function TouchControls() {
+  const device = useDevice();
+  const hud = useGameUI((s) => s.hud);
+  const moveStyle = useGameUI((s) => s.moveStyle);
+  const [coarse, setCoarse] = useState(true);
+  const verbs = resolveVerbs(hud);
+  const flickStart = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const apply = () => setCoarse(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  if (!shouldShowOverlay(device, coarse)) return null;
+
+  function flickDown(e: PointerEvent) {
+    flickStart.current = { x: e.clientX, y: e.clientY, t: performance.now() };
+  }
+  function flickUp(e: PointerEvent) {
+    const s = flickStart.current;
+    flickStart.current = null;
+    if (moveStyle !== "flick" || !s) return;
+    const result = mapFlick(e.clientX - s.x, e.clientY - s.y, performance.now() - s.t);
+    if (!result) return;
+    if (result.justJump) {
+      touch.jump = true;
+      queueMicrotask(() => {
+        touch.jump = false;
+      });
+    }
+    if (result.downHeld) {
+      touch.down = true;
+      queueMicrotask(() => {
+        touch.down = false;
+      });
+    }
+  }
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20">
       <div className="pointer-events-auto absolute bottom-0 left-0 h-40 w-[42%] pl-[max(0.4rem,env(safe-area-inset-left))] pb-[max(0.4rem,env(safe-area-inset-bottom))] landscape:h-28 landscape:w-[32%]">
-        <Stick />
+        <Stick style={moveStyle} />
       </div>
-      <div className="pointer-events-auto absolute bottom-[max(0.5rem,env(safe-area-inset-bottom))] right-[max(0.4rem,env(safe-area-inset-right))] flex items-end gap-1.5 landscape:gap-1">
-        <div className="mb-2 flex flex-col gap-1.5 landscape:mb-1 landscape:flex-row landscape:gap-1">
-          <Hold
-            label="Talk"
-            className="size-10 landscape:size-8"
-            icon={<Hand className="size-4 landscape:size-3.5" />}
-            on={() => {
-              touch.interact = true;
-            }}
-            off={() => {
-              touch.interact = false;
-            }}
-          />
-          <Hold
-            label="Potion"
-            className="size-10 landscape:size-8"
-            icon={<FlaskConical className="size-4 landscape:size-3.5" />}
-            on={() => {
-              touch.potion = true;
-            }}
-            off={() => {
-              touch.potion = false;
-            }}
-          />
-          <Hold
-            label="Skill"
-            className="size-11 landscape:size-9"
-            icon={<Sparkles className="size-4 landscape:size-3.5" />}
-            on={() => {
-              touch.skill = true;
-            }}
-            off={() => {
-              touch.skill = false;
-            }}
-          />
+      <div
+        className="pointer-events-auto absolute bottom-[max(0.5rem,env(safe-area-inset-bottom))] right-[max(0.4rem,env(safe-area-inset-right))] flex items-end gap-2 landscape:gap-1.5"
+        onPointerDown={moveStyle === "flick" ? flickDown : undefined}
+        onPointerUp={moveStyle === "flick" ? flickUp : undefined}
+      >
+        <div className="mb-2 flex flex-col gap-1.5 landscape:mb-1">
+          {verbs.interact ? (
+            <Hold
+              label="Interact"
+              className="size-11 min-h-[44px] min-w-[44px] landscape:size-11"
+              icon={<Hand className="size-4" />}
+              onDown={() => {
+                touch.interact = true;
+              }}
+              onUp={() => {
+                touch.interact = false;
+              }}
+            />
+          ) : null}
+          {verbs.use ? (
+            <Hold
+              label="Use item"
+              className="size-11 min-h-[44px] min-w-[44px] landscape:size-11"
+              icon={<CircleDot className="size-4" />}
+              onDown={() => {
+                touch.use = true;
+              }}
+              onUp={() => {
+                touch.use = false;
+              }}
+            />
+          ) : null}
+          {verbs.skill ? (
+            <Hold
+              label="Skill"
+              className="size-11 min-h-[44px] min-w-[44px] landscape:size-11"
+              icon={<Sparkles className="size-4" />}
+              onDown={() => {
+                touch.skill = true;
+              }}
+              onUp={() => {
+                touch.skill = false;
+              }}
+            />
+          ) : null}
         </div>
-        <Hold
-          label="Attack"
-          className="size-16 landscape:size-12"
-          icon={<Sword className="size-6 landscape:size-5" />}
-          on={() => {
-            touch.attack = true;
-          }}
-          off={() => {
-            touch.attack = false;
-          }}
-        />
+        <AttackHold canSkill={verbs.skill} />
         <Hold
           label="Jump"
-          className="size-[4.5rem] landscape:size-14"
+          className="size-[4.5rem] min-h-[44px] min-w-[44px] landscape:size-16"
           icon={<ChevronsUp className="size-7 landscape:size-6" />}
-          on={() => {
+          onDown={() => {
             touch.jump = true;
           }}
-          off={() => {
+          onUp={() => {
             touch.jump = false;
           }}
         />

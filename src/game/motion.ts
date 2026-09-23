@@ -23,7 +23,7 @@ export {
   MAX_FALL,
 } from "./feel";
 
-type SteerScene = {
+export type SteerScene = {
   jobId: JobId;
   player: Phaser.Physics.Arcade.Sprite;
   coyote: number;
@@ -91,10 +91,10 @@ export function applyPlayerMotion(scene: SteerScene, dt: number, a: ActionFrame,
   else scene.player.setAlpha(1);
 }
 
+/** Gravity cap only. Do not replace updatePlayer — the scene owns that call. */
 export function installMotion(SceneCls: { prototype: Record<string, unknown> }) {
   const proto = SceneCls.prototype as {
     create: () => void;
-    updatePlayer: (dt: number, a: ActionFrame, time: number) => void;
     player: Phaser.Physics.Arcade.Sprite;
     jobId: JobId;
   };
@@ -105,8 +105,5 @@ export function installMotion(SceneCls: { prototype: Record<string, unknown> }) 
     const job = JOBS[this.jobId];
     this.player.setMaxVelocity(job.speed, MAX_FALL);
     this.player.setGravityY(GRAVITY_DOWN);
-  };
-  proto.updatePlayer = function updatePlayerPatched(this: SteerScene, dt, a, time) {
-    applyPlayerMotion(this, dt, a, time);
   };
 }

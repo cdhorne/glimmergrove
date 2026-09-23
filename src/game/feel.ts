@@ -29,8 +29,9 @@ export const LEDGE_SLOP = 10;
 export const CHROME = {
   landscapeStickW: 0.32,
   landscapeStickHPx: 112,
-  landscapeJumpPx: 56,
-  landscapeAttackPx: 48,
+  landscapeJumpPx: 64,
+  landscapeAttackPx: 56,
+  minTargetPx: 44,
   landscapeHudMaxW: 320,
 };
 
