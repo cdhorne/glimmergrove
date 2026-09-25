@@ -33,3 +33,28 @@ export function keepWorldPrompt(prompt: string | null) {
     prompt === "Nothing to use"
   );
 }
+
+export type XpPlan = {
+  exp: number;
+  level: number;
+  leveled: boolean;
+};
+
+export function grantXp(opts: {
+  exp: number;
+  level: number;
+  amount: number;
+  nextAt: (level: number) => number;
+}): XpPlan {
+  let exp = opts.exp + opts.amount;
+  let level = opts.level;
+  let leveled = false;
+  let next = opts.nextAt(level);
+  while (exp >= next) {
+    exp -= next;
+    level += 1;
+    next = opts.nextAt(level);
+    leveled = true;
+  }
+  return { exp, level, leveled };
+}
