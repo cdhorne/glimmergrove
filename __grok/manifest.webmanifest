@@ -1,0 +1,17 @@
+{
+  "name": "Glimmergrove",
+  "short_name": "Glimmergrove",
+  "start_url": ".",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "landscape",
+  "background_color": "#121814",
+  "theme_color": "#121814",
+  "icons": [
+    {
+      "src": "./icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
