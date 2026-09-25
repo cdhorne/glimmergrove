@@ -33,7 +33,7 @@ export function tickTravel(s: TravelState, dt: number, a: ActionFrame): TravelTi
 
   if (map.npc && Math.abs(s.playerX - map.npc.x) < 100) {
     interact = { type: "npc" };
-    if (!keep) prompt = "E  Rest with Wren";
+    if (!keep) prompt = "E  Rest";
     if (a.justInteract) rest = true;
   }
 
@@ -54,7 +54,7 @@ export function tickTravel(s: TravelState, dt: number, a: ActionFrame): TravelTi
   else portalDwell += dt;
 
   if (s.mapId === "dewpath" && s.playerX > 780 && s.playerX < 940 && !keep && !prompt) {
-    prompt = "Jump the mist gap";
+    prompt = "Jump the gap";
   }
 
   return { prompt, interact, portalDwell, enter, rest };

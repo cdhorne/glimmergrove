@@ -7,24 +7,20 @@ import {
   type EconomyState,
   type Yield,
 } from "../economy.ts";
+import { isBossKind } from "../skin.ts";
 
 export type SpawnSlot = { kind: string; when?: "bloom" };
+
+export { skinFor } from "../skin.ts";
 
 export function shouldSpawn(
   slot: SpawnSlot,
   flags: { bloom: number },
   wardenDown: boolean,
 ): boolean {
-  if (slot.kind === "warden" && wardenDown) return false;
+  if (isBossKind(slot.kind) && wardenDown) return false;
   if (slot.when === "bloom" && flags.bloom < 1) return false;
   return true;
-}
-
-export function skinFor(kind: string): string {
-  if (kind === "bloom") return "dewslug";
-  if (kind === "stump" || kind === "nettle") return "capling";
-  if (kind === "bramble" || kind === "gorecap") return "warden";
-  return kind;
 }
 
 export function harvestAmount(kind: string): number {
