@@ -69,3 +69,7 @@ export function inGap(mapId: MapId, x: number, y: number, bodyY: number, gameH: 
 export function gapDeath(mapId: MapId, x: number, y: number, bodyY: number, gameH: number) {
   return inGap(mapId, x, y, bodyY, gameH, 40);
 }
+
+export function solidUnder(mapId: MapId, x: number) {
+  return MAPS[mapId].platforms.some((p) => !p.oneWay && x >= p.x && x <= p.x + p.w);
+}
