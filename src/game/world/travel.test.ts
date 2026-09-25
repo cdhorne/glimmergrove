@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { gapDeath, tickTravel } from "./travel.ts";
+import { gapDeath, solidUnder, tickTravel } from "./travel.ts";
 
 const idle = {
   moveX: 0,
@@ -33,7 +33,7 @@ test("standing on a portal does not suck you through", () => {
     0.3,
     idle,
   );
-  assert.equal(idleNear.interact?.to, "stinglane");
+  assert.equal(idleNear.interact && idleNear.interact.to, "stinglane");
   assert.equal(idleNear.enter, undefined);
 });
 
@@ -94,4 +94,8 @@ test("gap and fall are deaths; floor is not", () => {
   assert.equal(gapDeath("haven", 200, 200, 200, 540), false);
   assert.equal(gapDeath("haven", 200, 600, 200, 540), true);
   assert.equal(gapDeath("dewpath", 980, 400, 510, 540), true);
+});
+
+test("solidUnder treats haven spawn dirt as ground and skips one-ways", () => {
+  assert.equal(solidUnder("haven", 200), true);
 });
