@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyUse, canShowUse, contactDamage, keepWorldPrompt, portalLocked } from "./rules.ts";
+import { applyUse, canShowUse, contactDamage, grantXp, keepWorldPrompt, portalLocked } from "./rules.ts";
 
 test("dewslug cannot chip a guardian below the floor; nettles punch through def", () => {
   assert.equal(contactDamage(8, 10), 3);
@@ -36,7 +36,18 @@ test("heartwood gate and sticky prompts", () => {
   assert.equal(portalLocked(8, 8, false), false);
   assert.equal(portalLocked(0, 8, true), false);
   assert.equal(portalLocked(0, undefined, false), false);
-  assert.equal(keepWorldPrompt("Used · +36 HP"), true);
+  assert.equal(keepWorldPrompt("Used \u00b7 +36 HP"), true);
   assert.equal(keepWorldPrompt("The boss is down"), true);
-  assert.equal(keepWorldPrompt("Walk in  ·  Field"), false);
+  assert.equal(keepWorldPrompt("Walk in  \u00b7  Field"), false);
+});
+
+test("grantXp banks leftover and flags a level", () => {
+  const nextAt = (level) => 10 * level;
+  const mid = grantXp({ exp: 4, level: 1, amount: 3, nextAt });
+  assert.equal(mid.leveled, false);
+  assert.equal(mid.exp, 7);
+  const up = grantXp({ exp: 8, level: 1, amount: 5, nextAt });
+  assert.equal(up.leveled, true);
+  assert.equal(up.level, 2);
+  assert.equal(up.exp, 3);
 });
