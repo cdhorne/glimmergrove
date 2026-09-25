@@ -37,5 +37,6 @@ test("heartwood gate and sticky prompts", () => {
   assert.equal(portalLocked(0, 8, true), false);
   assert.equal(portalLocked(0, undefined, false), false);
   assert.equal(keepWorldPrompt("Used · +36 HP"), true);
-  assert.equal(keepWorldPrompt("Walk in  ·  Dewpath"), false);
+  assert.equal(keepWorldPrompt("The boss is down"), true);
+  assert.equal(keepWorldPrompt("Walk in  ·  Field"), false);
 });

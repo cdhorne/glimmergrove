@@ -28,7 +28,7 @@ export function TitleScreen() {
             Glimmergrove
           </h1>
           <p className="max-w-[34ch] text-sm leading-relaxed text-fg-muted">
-            Pick a calling. Jump the ledges. Hunt the Dewpath. Hands on, no auto-battle.
+            Pick a job. Jump. Hit things. Walk into rings to change maps.
           </p>
         </div>
         <div className="flex flex-col gap-3">
@@ -39,7 +39,7 @@ export function TitleScreen() {
               setScreen("create");
             }}
           >
-            New journey
+            New game
           </Button>
           <Button
             size="lg"
@@ -58,7 +58,7 @@ export function TitleScreen() {
           A/D move · W jump · J attack · K skill. Walk into glowing rings to change maps.
         </p>
         <p className="text-xs leading-relaxed text-fg-subtle md:hidden">
-          On-screen buttons appear in the grove: left/right to walk, jump, attack, skill, and talk.
+          On-screen buttons appear in play: walk, jump, attack, skill, talk.
           Walk into glowing rings to change maps. Landscape is nicer.
         </p>
       </div>

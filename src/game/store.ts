@@ -40,7 +40,7 @@ type GameUI = {
 export const useGameUI = create<GameUI>((set) => ({
   screen: "title",
   job: "guardian",
-  name: "Rowan",
+  name: "Player",
   paused: false,
   bagOpen: false,
   yardOpen: false,

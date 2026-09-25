@@ -22,7 +22,7 @@ export const Route = createRootRoute({
       { name: "mobile-web-app-capable", content: "yes" },
       {
         name: "description",
-        content: "A hands-on side-scrolling adventure through the floating groves.",
+        content: "A 2D side-scrolling action RPG slice. Jump, hit, portal.",
       },
     ],
     links: [

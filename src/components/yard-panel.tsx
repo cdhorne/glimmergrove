@@ -1,4 +1,4 @@
-/** Haven yard. Call only from PlayView. Mutates save + economy, never Phaser. */
+/** Town yard. Call only from PlayView. Mutates save + economy, never Phaser. */
 import { Button } from "@/components/ui/button";
 import { gameBus } from "@/game/bus";
 import { build, depositBag, runDigester, tickSeason } from "@/game/economy";
@@ -83,7 +83,7 @@ export function YardPanel({
           </Button>
         </div>
         <p className="mt-3 text-xs text-fg-subtle">
-          Stockpile 6+ Feed without running the drum and Dewpath grows blooms. Cover keeps the cistern clear if you lose
+          Stockpile 6+ Feed without running the drum and Field grows blooms. Cover keeps the cistern clear if you lose
           Feed to the gap.
         </p>
       </div>

@@ -12,7 +12,7 @@ export class BootScene extends Phaser.Scene {
     const bar = this.add.rectangle(w / 2, h / 2, 240, 8, 0x2d3a32).setOrigin(0.5);
     const fill = this.add.rectangle(w / 2 - 120, h / 2, 0, 8, 0x6b8f71).setOrigin(0, 0.5);
     this.add
-      .text(w / 2, h / 2 - 28, "Loading the groves", {
+      .text(w / 2, h / 2 - 28, "Loading", {
         fontFamily: "Figtree, sans-serif",
         fontSize: "16px",
         color: "#f4efe4",

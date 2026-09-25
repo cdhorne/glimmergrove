@@ -30,8 +30,8 @@ export function JobSelect() {
     <div className="flex min-h-dvh flex-col bg-bg px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Choose a calling</p>
-          <h2 className="font-display text-3xl font-semibold tracking-[-0.03em]">Who walks the grove?</h2>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Pick a job</p>
+          <h2 className="font-display text-3xl font-semibold tracking-[-0.03em]">Start</h2>
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-fg-muted">Name</span>
@@ -75,7 +75,7 @@ export function JobSelect() {
             Back
           </Button>
           <Button className="flex-1" onClick={start}>
-            Enter the grove
+            Enter
           </Button>
         </div>
       </div>

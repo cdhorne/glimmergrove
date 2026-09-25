@@ -1,0 +1,27 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { isBossKind, NPC_SHEET, skinFor, skinLook } from "./skin.ts";
+
+test("extra kinds reuse base sheets", () => {
+  assert.equal(skinFor("dewslug"), "dewslug");
+  assert.equal(skinFor("bloom"), "dewslug");
+  assert.equal(skinFor("stump"), "capling");
+  assert.equal(skinFor("nettle"), "capling");
+  assert.equal(skinFor("bramble"), "warden");
+  assert.equal(skinFor("gorecap"), "warden");
+});
+
+test("boss kind and looks stay explicit", () => {
+  assert.equal(isBossKind("warden"), true);
+  assert.equal(isBossKind("gorecap"), false);
+  assert.equal(skinLook("warden").scale, 0.5);
+  assert.equal(skinLook("gorecap").scale, 0.4);
+  assert.equal(skinLook("bloom").scale, 0.52);
+  assert.equal(skinLook("nettle").tint, 0xc45c4a);
+  assert.equal(NPC_SHEET, "herbalist-idle");
+});
+
+test("unknown kinds keep their own sheet and a default scale", () => {
+  assert.equal(skinFor("warden"), "warden");
+  assert.equal(skinLook("mystery").scale, 0.4);
+});
