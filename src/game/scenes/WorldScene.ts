@@ -1,1 +1,1 @@
-PLACEHOLDER
+export { WorldScene } from "./world-scene";
